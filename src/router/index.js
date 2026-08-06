@@ -17,6 +17,11 @@ const router = createRouter({
       component: () => import('../views/shop/CatalogView.vue')
     },
     {
+      path: '/tabla-de-talles', // 👈 NUEVA RUTA DE TALLES
+      name: 'tabla-de-talles',
+      component: () => import('../views/shop/TallesView.vue')
+    },
+    {
       path: '/producto/:id', // El ":id" permite que la URL cambie según la prenda (ej: /producto/1)
       name: 'producto',
       component: () => import('../views/shop/ProductDetailView.vue')
@@ -32,8 +37,7 @@ const router = createRouter({
       component: () => import('../views/shop/CheckoutView.vue')
     },
 
-
- // ==========================================
+    // ==========================================
     // ⚙️ RUTAS DEL ADMINISTRADOR (CORREGIDO Y SIN CONFUSIONES)
     // ==========================================
     {

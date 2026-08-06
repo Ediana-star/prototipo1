@@ -1,8 +1,7 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { useTiendaStore } from '../../stores/useTiendaStore' // 👈 Importamos el cerebro
+import { useTiendaStore } from '../../stores/useTiendaStore'
 
-// Inicializamos el store para poder leer la cantidad de artículos
 const store = useTiendaStore()
 </script>
 
@@ -13,17 +12,21 @@ const store = useTiendaStore()
       <RouterLink to="/">María Urbana</RouterLink>
     </div>
 
-    <!-- Menú de navegación central -->
+    <!-- Menú de navegación central con separadores -->
     <nav class="menu">
-      <RouterLink to="/">Inicio</RouterLink>
-      <RouterLink to="/catalogo">Catálogo</RouterLink>
+      <RouterLink to="/" active-class="activo">Inicio</RouterLink>
+      <span class="separador">|</span>
+      
+      <RouterLink to="/catalogo" active-class="activo">Catálogo</RouterLink>
+      <span class="separador">|</span>
+      
+      <RouterLink to="/tabla-de-talles" active-class="activo">Tabla de talles</RouterLink>
     </nav>
 
-    <!-- Ícono del carrito con CONTADOR DINÁMICO -->
+    <!-- Ícono del carrito -->
     <div class="cart-icon">
       <RouterLink to="/carrito">
         🛒 Carrito 
-        <!-- Si no hay ítems, muestra (0), si hay, se actualiza solo mágicamente -->
         <span class="contador">({{ store.totalArticulos }})</span>
       </RouterLink>
     </div>
@@ -49,7 +52,8 @@ const store = useTiendaStore()
 
 .menu {
   display: flex;
-  gap: 2.5rem;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .menu a {
@@ -57,10 +61,25 @@ const store = useTiendaStore()
   color: #555555;
   font-weight: 500;
   transition: color 0.3s;
+  padding-bottom: 3px; /* Espacio para el borde activo */
 }
 
 .menu a:hover {
   color: #8C7355;
+}
+
+/* 🌟 Estilo para la pestaña activa (como en la maqueta) */
+.menu a.activo {
+  color: #8C7355;
+  font-weight: 600;
+  border-bottom: 2px solid #8C7355;
+}
+
+/* 🌟 Separadores de la barra de navegación */
+.separador {
+  color: #CCCCCC;
+  font-size: 0.9rem;
+  user-select: none;
 }
 
 .cart-icon a {
@@ -74,7 +93,6 @@ const store = useTiendaStore()
   color: #8C7355;
 }
 
-/* Un pequeño estilo extra para que el numerito resalte delicadamente */
 .contador {
   color: #8C7355;
   font-weight: bold;

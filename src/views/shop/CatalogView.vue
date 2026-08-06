@@ -107,8 +107,13 @@ const productosFiltrados = computed(() => {
 
     <div class="grilla-productos" v-if="productosFiltrados.length > 0">
       <div class="tarjeta-producto" v-for="producto in productosFiltrados" :key="producto.id">
-        <div class="imagen-placeholder">
-          <span>👕</span>
+       <!-- Reemplazamos el emoji por la foto real -->
+        <div class="contenedor-foto">
+          <img 
+            :src="producto.imagen || 'https://via.placeholder.com/300?text=Sin+Foto'" 
+            :alt="producto.nombre" 
+            class="foto-prenda"
+          />
         </div>
         
         <div class="info-producto">
@@ -277,14 +282,25 @@ const productosFiltrados = computed(() => {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
 }
-
-.imagen-placeholder {
-  background-color: #F7F5F0;
+/* Contenedor de la imagen */
+.contenedor-foto {
   height: 280px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 3rem;
+  width: 100%;
+  background-color: #F7F5F0;
+  overflow: hidden; /* Clave: esconde lo que sobresalga para mantener los bordes prolijos */
+}
+
+/* Estilo de la imagen */
+.foto-prenda {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Propiedad genial: recorta la foto proporcionalmente para que llene el recuadro sin estirarse ni aplastarse */
+  transition: transform 0.4s ease; /* Preparamos la foto para una transición suave */
+}
+
+/* Efecto hover: cuando pasamos el mouse por la tarjeta, la foto hace un zoom sutil */
+.tarjeta-producto:hover .foto-prenda {
+  transform: scale(1.05);
 }
 
 .info-producto {

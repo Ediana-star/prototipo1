@@ -45,7 +45,11 @@ const agregarAlCarritoReal = () => {
     <div class="wrapper-producto">
       <!-- Columna Izquierda: Foto de la prenda -->
       <div class="foto-grande">
-        <span>FOTO DE {{ producto.nombre.toUpperCase() }}</span>
+        <img 
+          :src="producto.imagen || 'https://via.placeholder.com/500?text=Sin+Foto'" 
+          :alt="producto.nombre"
+          class="imagen-detalle"
+        />
       </div>
 
       <!-- Columna Derecha: Información y Compra -->
@@ -121,10 +125,17 @@ const agregarAlCarritoReal = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #CCCCCC;
-  font-weight: bold;
   border-radius: 8px;
   border: 1px solid #EAEAEA;
+  overflow: hidden; /* 👈 AGREGAR ESTO: oculta lo que sobresalga de la foto */
+}
+
+/* 👈 AGREGAR ESTA NUEVA CLASE: */
+.imagen-detalle {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* La magia para que la foto no se estire ni aplaste */
+  display: block;
 }
 
 .info-compra {

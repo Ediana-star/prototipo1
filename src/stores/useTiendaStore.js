@@ -12,7 +12,6 @@ export const useTiendaStore = defineStore('tienda', () => {
     { id: 5, nombre: 'Gorra Bordada', categoria: 'Accesorios', precio: 490, stock: 60, descripcion: 'Gorra con visera curva y bordado exclusivo en el frente.', talles: ['Único'] }
   ])
 
-  // 👇 NUEVO: Acá se van a ir guardando las prendas que elija el comprador
   const carrito = ref([])
 
   const configuracion = ref({
@@ -22,39 +21,30 @@ export const useTiendaStore = defineStore('tienda', () => {
 
   // 2. ACCIONES (Funciones)
   
-  // 👇 NUEVA ACCIÓN: Para meter cosas al carrito
   const agregarAlCarrito = (producto, talle) => {
-    // Primero revisamos si ese mismo producto Y con ese mismo talle ya está en el carrito
     const existe = carrito.value.find(item => item.id === producto.id && item.talle === talle)
 
     if (existe) {
-      // Si ya existía, solo le sumamos 1 a la cantidad
       existe.cantidad++
     } else {
-      // Si es nuevo, lo agregamos a la lista con cantidad 1
+      // ✅ AHORA: Copiamos todo el objeto producto (incluyendo 'imagen') + talle y cantidad
       carrito.value.push({
-        id: producto.id,
-        nombre: producto.nombre,
-        precio: producto.precio,
-        categoria: producto.categoria,
+        ...producto,
         talle: talle,
         cantidad: 1
       })
     }
   }
 
-  // 👇 NUEVA ACCIÓN: Para sacar un producto del carrito
   const eliminarDelCarrito = (id, talle) => {
     carrito.value = carrito.value.filter(item => !(item.id === id && item.talle === talle))
   }
 
-  // 3. GETTERS (Datos calculados automáticamente)
-  // 👇 NUEVO: Cuenta cuántos artículos hay en total en el carrito (para poner el numerito en el Header)
+  // 3. GETTERS
   const totalArticulos = computed(() => {
     return carrito.value.reduce((suma, item) => suma + item.cantidad, 0)
   })
 
-  // Funciones de administración (las dejamos como estaban)
   const agregarProducto = (nuevoProducto) => {
     const siguienteId = productos.value.length > 0 ? productos.value[productos.value.length - 1].id + 1 : 1
     productos.value.push({ id: siguienteId, ...nuevoProducto })
@@ -62,11 +52,11 @@ export const useTiendaStore = defineStore('tienda', () => {
 
   return {
     productos,
-    carrito, // 👈 Exportamos el carrito
+    carrito,
     configuracion,
-    totalArticulos, // 👈 Exportamos el contador total
-    agregarAlCarrito, // 👈 Exportamos la función de agregar
-    eliminarDelCarrito, // 👈 Exportamos la función de eliminar
+    totalArticulos,
+    agregarAlCarrito,
+    eliminarDelCarrito,
     agregarProducto
   }
 })

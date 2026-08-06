@@ -30,8 +30,13 @@ const totalPagar = computed(() => {
       <div class="lista-items">
         <div class="item-carrito" v-for="item in store.carrito" :key="item.id + item.talle">
           
+         <!-- Miniatura con la foto real del producto -->
           <div class="item-mini">
-            <span>👕</span>
+            <img 
+              :src="item.imagen || item.producto?.imagen || 'https://via.placeholder.com/100?text=Sin+Foto'" 
+              :alt="item.nombre"
+              class="foto-mini"
+            />
           </div>
 
           <div class="item-detalles">
@@ -172,15 +177,23 @@ const totalPagar = computed(() => {
   gap: 1.5rem;
 }
 
+/* Reemplazá .item-mini por este estilo */
 .item-mini {
   background-color: #F7F5F0;
   width: 70px;
   height: 70px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2rem;
   border-radius: 6px;
+  border: 1px solid #EAEAEA;
+  overflow: hidden; /* Corta los bordes sobrantes de la foto según el border-radius */
+  flex-shrink: 0;   /* Evita que la imagen se deforme o achique si el título es largo */
+}
+
+/* Agregá esta nueva clase justo abajo de .item-mini */
+.foto-mini {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Mantiene la proporción perfecta sin estirar la imagen */
+  display: block;
 }
 
 .item-detalles {
