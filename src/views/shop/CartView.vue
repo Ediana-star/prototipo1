@@ -17,12 +17,12 @@ const totalPagar = computed(() => {
   <ShopHeader />
 
   <main class="carrito-container">
-    <h1 class="titulo-carrito">Mi Carrito de Compras</h1>
+    <h1 class="titulo-carrito">Tu Carrito</h1>
 
     <div v-if="store.carrito.length === 0" class="carrito-vacio">
-      <p>Tu carrito está vacío actualmente.</p>
+      <p>Tu carrito está vacío</p>
       <p class="subtexto">¿No sabés por dónde empezar? ¡Mirá nuestras prendas exclusivas!</p>
-      <RouterLink to="/catalogo" class="btn-ir-catalogo">Ver Catálogo</RouterLink>
+      <RouterLink to="/catalogo" class="btn-ir-catalogo">Volver al Catálogo</RouterLink>
     </div>
 
     <div v-else class="wrapper-carrito">
@@ -30,7 +30,7 @@ const totalPagar = computed(() => {
       <div class="lista-items">
         <div class="item-carrito" v-for="item in store.carrito" :key="item.id + item.talle">
           
-         <!-- Miniatura con la foto real del producto -->
+          <!-- Miniatura con la foto real del producto -->
           <div class="item-mini">
             <img 
               :src="item.imagen || item.producto?.imagen || 'https://via.placeholder.com/100?text=Sin+Foto'" 
@@ -46,12 +46,13 @@ const totalPagar = computed(() => {
           </div>
 
           <div class="item-cantidad">
-           <!-- Buscá el botón del menos (-) y dejalo exactamente así: -->
+            <!-- 🚨 BRECHA 1: Agregamos :disabled cuando la cantidad es 1 (CU-02 A2) -->
             <button 
-             @click="item.cantidad > 1 ? item.cantidad-- : null" 
-             class="btn-cant"
-             >
-             -
+               @click="item.cantidad > 1 ? item.cantidad-- : null" 
+               :disabled="item.cantidad === 1"
+               class="btn-cant"
+            >
+              -
             </button>
             <span class="numero-cant">{{ item.cantidad }}</span>
             <button 
@@ -66,12 +67,13 @@ const totalPagar = computed(() => {
             <p>${{ item.precio * item.cantidad }}</p>
           </div>
 
+          <!-- 🚨 BRECHA 2: Cambiamos el tacho por la X acorde al mockup y CU-02 A4 -->
           <button 
             @click="store.eliminarDelCarrito(item.id, item.talle)" 
             class="btn-eliminar"
             title="Eliminar producto"
           >
-            🗑️
+            ✕
           </button>
         </div>
       </div>
@@ -90,12 +92,13 @@ const totalPagar = computed(() => {
         </div>
 
         <div class="fila-resumen total">
-          <span>Total a pagar</span>
+          <span>Total</span>
           <span>${{ totalPagar }}</span>
         </div>
 
+        <!-- 🚨 BRECHA 3: Cambiamos el texto a "Finalizar Compra" según CU-02 Paso 5 -->
         <RouterLink to="/checkout" class="btn-proceder">
-          Proceder al Pago
+          Finalizar Compra
         </RouterLink>
       </div>
 
@@ -177,22 +180,20 @@ const totalPagar = computed(() => {
   gap: 1.5rem;
 }
 
-/* Reemplazá .item-mini por este estilo */
 .item-mini {
   background-color: #F7F5F0;
   width: 70px;
   height: 70px;
   border-radius: 6px;
   border: 1px solid #EAEAEA;
-  overflow: hidden; /* Corta los bordes sobrantes de la foto según el border-radius */
-  flex-shrink: 0;   /* Evita que la imagen se deforme o achique si el título es largo */
+  overflow: hidden; 
+  flex-shrink: 0;   
 }
 
-/* Agregá esta nueva clase justo abajo de .item-mini */
 .foto-mini {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Mantiene la proporción perfecta sin estirar la imagen */
+  object-fit: cover; 
   display: block;
 }
 
@@ -238,8 +239,14 @@ const totalPagar = computed(() => {
   transition: background-color 0.2s;
 }
 
-.btn-cant:hover {
+.btn-cant:hover:not(:disabled) {
   background-color: #F0F0F0;
+}
+
+/* Estilo visual cuando el botón menos está deshabilitado */
+.btn-cant:disabled {
+  color: #CCCCCC;
+  cursor: not-allowed;
 }
 
 .numero-cant {
@@ -259,14 +266,16 @@ const totalPagar = computed(() => {
 .btn-eliminar {
   background: none;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   cursor: pointer;
   padding: 0.5rem;
-  transition: transform 0.2s;
+  color: #333333;
+  transition: transform 0.2s, color 0.2s;
 }
 
 .btn-eliminar:hover {
   transform: scale(1.15);
+  color: #C0392B;
 }
 
 /* Columna de la Derecha: El Resumen */
@@ -314,7 +323,7 @@ const totalPagar = computed(() => {
 .btn-proceder {
   display: block;
   text-align: center;
-  background-color: #8C7355;
+  background-color: #C0955B; /* Tono dorado/mostaza de la marca */
   color: #FFFFFF;
   text-decoration: none;
   padding: 1rem;
@@ -327,6 +336,6 @@ const totalPagar = computed(() => {
 }
 
 .btn-proceder:hover {
-  background-color: #6E5941;
+  background-color: #A37F4C;
 }
 </style>

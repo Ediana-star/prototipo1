@@ -1,7 +1,31 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import AdminSidebar from '../../components/admin/AdminSidebar.vue'
+import { ref, onMounted } from 'vue'
+
+const router = useRouter()
+
+const nombreAdmin = ref('Administrador')
+
+onMounted(() => {
+  const correoGuardado = localStorage.getItem('adminEmail')
+
+  if (correoGuardado) {
+    nombreAdmin.value = correoGuardado.split('@')[0]
+  }
+})
+
+// ==========================================
+// 🔒 CERRAR SESIÓN
+// ==========================================
+const cerrarSesion = () => {
+  localStorage.removeItem('sesionIniciada')
+
+  // Después de cerrar sesión, volvemos al login
+  router.push('/admin/login')
+}
 </script>
+
 
 <template>
   <div class="admin-layout">
@@ -10,17 +34,16 @@ import AdminSidebar from '../../components/admin/AdminSidebar.vue'
     <div class="admin-bloque-derecho">
       
       <header class="admin-topbar">
-        <div class="topbar-buscador">
-          <span class="icono-buscar">🔍</span>
-          <input type="text" placeholder="Buscar..." />
-        </div>
-        <div class="topbar-usuario">
-          <span class="notificacion-bell">🔔</span>
-          <div class="usuario-perfil">
-            <span class="avatar-placeholder">👤</span>
-            <span class="usuario-nombre">Hola, Administrador ▼</span>
-          </div>
-        </div>
+       <div class="topbar-usuario">
+  <div class="usuario-perfil">
+    <span class="avatar-placeholder">👤</span>
+    <span class="usuario-nombre">Hola, {{ nombreAdmin }}</span>
+  </div>
+
+  <button class="btn-cerrar-sesion" @click="cerrarSesion">
+    Cerrar sesión
+  </button>
+</div>
       </header>
 
       <main class="admin-contenido-dinamico">
@@ -49,7 +72,8 @@ import AdminSidebar from '../../components/admin/AdminSidebar.vue'
   background-color: #FFFFFF;
   height: 70px;
   display: flex;
-  justify-content: space-between;
+  /* CAMBIAMOS ESTO: de space-between a flex-end */
+  justify-content: flex-end; 
   align-items: center;
   padding: 0 2rem;
   border-bottom: 1px solid #EAE5DF;
@@ -84,6 +108,7 @@ import AdminSidebar from '../../components/admin/AdminSidebar.vue'
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  
 }
 
 .avatar-placeholder {
@@ -102,5 +127,22 @@ import AdminSidebar from '../../components/admin/AdminSidebar.vue'
 .admin-contenido-dinamico {
   padding: 2.5rem;
   flex-grow: 1;
+}
+
+.btn-cerrar-sesion {
+  background-color: transparent;
+  border: 1px solid #DDD7D0;
+  color: #6E5941;
+  padding: 0.55rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cerrar-sesion:hover {
+  background-color: #F3EFEA;
+  border-color: #8C7355;
 }
 </style>

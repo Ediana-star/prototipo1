@@ -13,21 +13,11 @@ import { RouterLink } from 'vue-router'
     <!-- Menú de Navegación Interno -->
   <!-- Buscá el <nav> de tu AdminSidebar y dejalo así: -->
   <nav class="sidebar-menu">
-      <RouterLink to="/admin" class="menu-item" exact-active-class="activo">
-        🏠 Escritorio (Dashboard)
-      </RouterLink>
       
       <RouterLink to="/admin/catalogo" class="menu-item" active-class="activo">
         📦 Catálogo de Productos
       </RouterLink>
       
-      <RouterLink to="/admin/pedidos" class="menu-item" active-class="activo">
-        📋 Gestión de Pedidos
-      </RouterLink>
-
-      <RouterLink to="/admin/clientes" class="menu-item" active-class="activo">
-        👥 Clientes
-      </RouterLink>
 
       <RouterLink to="/admin/configuracion" class="menu-item" active-class="activo">
         ⚙️ Configuración del Sitio

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue' // 👈 1. IMPORTAMOS 'watch' ACÁ
+import { ref, computed, watch } from 'vue' 
 import { useRoute, RouterLink } from 'vue-router'
 import ShopHeader from '../../components/shop/ShopHeader.vue'
 import ShopFooter from '../../components/shop/ShopFooter.vue'
@@ -8,19 +8,15 @@ import { useTiendaStore } from '../../stores/useTiendaStore'
 const store = useTiendaStore()
 const route = useRoute()
 
-// Estados reactivos de los filtros básicos
 const textoBusqueda = ref('')
 const talleSeleccionado = ref('Todos')
-const ordenPrecio = ref('defecto')
+const ordenPrecio = ref('recientes') 
 
-// Inicializamos la categoría con lo que venga en la URL, o 'Todos'
 const categoriaSeleccionada = ref(route.query.categoria || 'Todos')
 
-// 🌟 LA SOLUCIÓN: Este vigilante se activa cada vez que la URL cambia
 watch(
   () => route.query.categoria,
   (nuevaCategoria) => {
-    // Si la URL se queda sin categoría (como en Explorar Colección), vuelve automáticamente a 'Todos'
     categoriaSeleccionada.value = nuevaCategoria || 'Todos'
   }
 )
@@ -28,11 +24,21 @@ watch(
 const categorias = ['Todos', 'Camisetas', 'Hoodies', 'Pantalones', 'Accesorios']
 const tallesDisponibles = ['Todos', 'S', 'M', 'L', 'XL', 'Único']
 
-// El computed de productosFiltrados queda exactamente igual...
+// Sistema de Favoritos
+const favoritos = ref([])
+
+const toggleFavorito = (id) => {
+  if (favoritos.value.includes(id)) {
+    favoritos.value = favoritos.value.filter(favId => favId !== id)
+  } else {
+    favoritos.value.push(id)
+  }
+}
+
 const productosFiltrados = computed(() => {
   let resultado = store.productos.filter(producto => {
     const coincideBusqueda = producto.nombre.toLowerCase().includes(textoBusqueda.value.toLowerCase()) ||
-                            producto.descripcion.toLowerCase().includes(textoBusqueda.value.toLowerCase())
+                             producto.descripcion.toLowerCase().includes(textoBusqueda.value.toLowerCase())
     
     const coincideCategoria = categoriaSeleccionada.value === 'Todos' || 
                               producto.categoria === categoriaSeleccionada.value
@@ -70,7 +76,7 @@ const productosFiltrados = computed(() => {
         <div class="ordenar-caja">
           <label for="orden">Ordenar por:</label>
           <select id="orden" v-model="ordenPrecio" class="select-orden">
-            <option value="defecto">Recomendados</option>
+            <option value="recientes">Más recientes</option>
             <option value="menor-mayor">Precio: Menor a Mayor</option>
             <option value="mayor-menor">Precio: Mayor a Menor</option>
           </select>
@@ -107,9 +113,16 @@ const productosFiltrados = computed(() => {
 
     <div class="grilla-productos" v-if="productosFiltrados.length > 0">
       <div class="tarjeta-producto" v-for="producto in productosFiltrados" :key="producto.id">
-       <!-- Reemplazamos el emoji por la foto real -->
+        
         <div class="contenedor-foto">
+          <!-- Botón de favoritos -->
+          <button class="btn-favorito" @click.prevent="toggleFavorito(producto.id)">
+             {{ favoritos.includes(producto.id) ? '🖤' : '🤍' }}
+          </button>
+          
+          <!-- Imagen con lazy loading, pero sin ser un enlace -->
           <img 
+            loading="lazy" 
             :src="producto.imagen || 'https://via.placeholder.com/300?text=Sin+Foto'" 
             :alt="producto.nombre" 
             class="foto-prenda"
@@ -118,11 +131,15 @@ const productosFiltrados = computed(() => {
         
         <div class="info-producto">
           <span class="categoria">{{ producto.categoria }}</span>
+          
+          <!-- Título normal, sin ser un enlace -->
           <h3 class="nombre">{{ producto.nombre }}</h3>
+          
           <p class="precio">${{ producto.precio }}</p>
           <p class="talles-tarjeta">Talles: {{ producto.talles.join(', ') }}</p>
         </div>
 
+        <!-- Este se mantiene como el ÚNICO enlace para entrar al producto -->
         <RouterLink :to="`/producto/${producto.id}`" class="btn-ver">
           Ver Detalles
         </RouterLink>
@@ -152,7 +169,6 @@ const productosFiltrados = computed(() => {
   font-size: 2rem;
 }
 
-/* Contenedor de filtros elegante */
 .panel-filtros {
   background-color: #F7F5F0;
   padding: 1.5rem;
@@ -193,7 +209,6 @@ const productosFiltrados = computed(() => {
   transform: translateY(-50%);
 }
 
-/* Ordenar selector */
 .ordenar-caja {
   display: flex;
   align-items: center;
@@ -211,7 +226,6 @@ const productosFiltrados = computed(() => {
   cursor: pointer;
 }
 
-/* Bloques de categorías y talles */
 .bloque-filtro {
   display: flex;
   align-items: center;
@@ -261,7 +275,6 @@ const productosFiltrados = computed(() => {
   color: #FFFFFF;
 }
 
-/* Grilla de productos */
 .grilla-productos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -282,23 +295,45 @@ const productosFiltrados = computed(() => {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
 }
-/* Contenedor de la imagen */
+
 .contenedor-foto {
   height: 280px;
   width: 100%;
   background-color: #F7F5F0;
-  overflow: hidden; /* Clave: esconde lo que sobresalga para mantener los bordes prolijos */
+  overflow: hidden; 
+  position: relative; /* Clave para el corazón */
 }
 
-/* Estilo de la imagen */
+/* Botón de favoritos */
+.btn-favorito {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 10;
+  transition: transform 0.2s;
+}
+
+.btn-favorito:hover {
+  transform: scale(1.1);
+}
+
 .foto-prenda {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Propiedad genial: recorta la foto proporcionalmente para que llene el recuadro sin estirarse ni aplastarse */
-  transition: transform 0.4s ease; /* Preparamos la foto para una transición suave */
+  object-fit: cover; 
+  transition: transform 0.4s ease; 
 }
 
-/* Efecto hover: cuando pasamos el mouse por la tarjeta, la foto hace un zoom sutil */
 .tarjeta-producto:hover .foto-prenda {
   transform: scale(1.05);
 }

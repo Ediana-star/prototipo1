@@ -8,32 +8,32 @@ import { useTiendaStore } from '../../stores/useTiendaStore'
 const store = useTiendaStore()
 const router = useRouter()
 
-// 1. Datos reactivos para el formulario de envío
 const nombre = ref('')
 const telefono = ref('')
 const direccion = ref('')
 const notas = ref('')
 
-// 2. Calculamos el total de la compra trayendo los datos de Pinia
 const totalPagar = computed(() => {
   return store.carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0)
 })
 
-// 3. Función para procesar y finalizar la compra
+// 🚨 BRECHA 1: Función actualizada para conectar con la API de WhatsApp (CU-03 Paso 10)
 const confirmarPedido = () => {
-  // Validamos de forma sencilla que los campos obligatorios no estén vacíos
   if (!nombre.value || !telefono.value || !direccion.value) {
     alert('Por favor, completá todos los campos obligatorios (*) para el envío.')
     return
   }
 
-  // Simulamos el envío exitoso del pedido
-  alert(`¡Gracias por tu compra, ${nombre.value}! Tu pedido a la dirección "${direccion.value}" ha sido registrado con éxito.`)
-  
-  // ¡MAGIA!: Vaciamos el carrito en Pinia porque la compra ya se realizó
+  // 1. Preparamos el mensaje codificado para la URL de WhatsApp
+  const numeroWhatsApp = "59899123456" // Reemplaza con el número real de la tienda
+  const mensaje = `Hola, soy ${nombre.value}, acabo de realizar un pedido en la web por un total de $${totalPagar.value}. Mi dirección de envío es: ${direccion.value}. Teléfono de contacto: ${telefono.value}.`
+  const mensajeCodificado = encodeURIComponent(mensaje)
+
+  // 2. Vaciamos el carrito en Pinia y registramos la orden
   store.carrito = []
-  
-  // Redirigimos automáticamente al usuario a la página de inicio
+
+  // 3. Abrimos WhatsApp en una nueva pestaña y redirigimos al inicio
+  window.open(`https://wa.me/${numeroWhatsApp}?text=${mensajeCodificado}`, '_blank')
   router.push('/')
 }
 </script>
@@ -44,21 +44,16 @@ const confirmarPedido = () => {
   <main class="checkout-container">
     <h1 class="titulo-checkout">Finalizar Compra</h1>
 
-    <!-- Si intentan entrar al checkout sin haber agregado productos al carrito -->
     <div v-if="store.carrito.length === 0" class="checkout-vacio">
       <p>No hay productos en el carrito para procesar un pedido.</p>
       <RouterLink to="/catalogo" class="btn-volver">Ir al Catálogo</RouterLink>
     </div>
 
-    <!-- FLUJO SEGURO: Sin buscador expuesto -->
     <div v-else class="wrapper-checkout">
       
-      <!-- Columna Izquierda: Formulario de Envío Seguro -->
+      <!-- Columna Izquierda: Formulario de Envío -->
       <form @submit.prevent="confirmarPedido" class="formulario-envio">
-        <h2>Datos para la entrega de tu pedido</h2>
-        <p class="aclaracion-seguridad">
-          🔒 Tus datos se procesan de forma segura para coordinar la entrega.
-        </p>
+        <h2>O completa tus datos para un nuevo pedido:</h2>
         
         <div class="campo">
           <label for="nombre">Nombre Completo *</label>
@@ -84,44 +79,40 @@ const confirmarPedido = () => {
           >
         </div>
 
+        <!-- 🚨 BRECHA 2: Cambiamos a textarea expansible según requisitos del CU-03 -->
         <div class="campo">
           <label for="direccion">Dirección de envío *</label>
-          <input 
-            type="text" 
+          <textarea 
             id="direccion" 
             v-model="direccion" 
-            placeholder="Ej: Av. Principal 1234, Ap. 201" 
-            autocomplete="street-address"
-            required
-          >
-        </div>
-
-        <div class="campo">
-          <label for="notas">Notas adicionales (Opcional)</label>
-          <textarea 
-            id="notas" 
-            v-model="notas" 
-            placeholder="Ej: Tocar el timbre dos veces, dejar en portería, etc." 
+            placeholder="Ej: Av. Principal 1234, Ap. 201 (Detallá piso o referencias)" 
             rows="3"
+            required
           ></textarea>
         </div>
 
-        <!-- Nota aclaratoria del boceto original -->
         <p class="nota-pago">
           *No procesamos pagos online. Una vez confirmado, coordinaremos el pago y envío por WhatsApp.
         </p>
       </form>
 
-      <!-- Columna Derecha: Tu Pedido -->
+      <!-- Columna Derecha: Resumen de Compra (CU-03 Paso 2) -->
       <div class="resumen-final">
-        <h2>Tu Pedido</h2>
+        <h2>Resumen de Compra</h2>
         
+        <!-- 🚨 BRECHA 3: Estructura detallada con miniatura, cantidad y precio -->
         <div class="lista-resumen-checkout">
           <div class="item-checkout" v-for="item in store.carrito" :key="item.id + item.talle">
-            <span class="cant-item">{{ item.cantidad }}x</span>
+            <div class="item-mini-chico">
+              <img 
+                :src="item.imagen || item.producto?.imagen || 'https://via.placeholder.com/80?text=Sin+Foto'" 
+                :alt="item.nombre"
+                class="foto-mini-chica"
+              />
+            </div>
             <div class="detalles-item">
               <h4>{{ item.nombre }}</h4>
-              <p>Talle: {{ item.talle }}</p>
+              <p>Talle: {{ item.talle }} | Cant: {{ item.cantidad }}</p>
             </div>
             <span class="precio-item">${{ item.precio * item.cantidad }}</span>
           </div>
@@ -185,27 +176,25 @@ const confirmarPedido = () => {
   font-weight: bold;
 }
 
-/* Distribución en 2 columnas */
 .wrapper-checkout {
   display: flex;
   gap: 3rem;
   align-items: flex-start;
 }
 
-/* Estilos del Formulario */
 .formulario-envio {
   flex: 1.5;
-  background-color: #FFFFFF;
+  background-color: #FDFCF7; /* Tono cálido de los mockups */
   border: 1px solid #EAEAEA;
   padding: 2rem;
   border-radius: 8px;
 }
 
 .formulario-envio h2, .resumen-final h2 {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   color: #333333;
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid #F0F0F0;
+  border-bottom: 1px solid #EAEAEA;
   padding-bottom: 0.5rem;
 }
 
@@ -228,6 +217,7 @@ const confirmarPedido = () => {
   border-radius: 4px;
   font-size: 1rem;
   color: #333333;
+  background-color: #FFFFFF;
   transition: border-color 0.3s;
 }
 
@@ -236,21 +226,21 @@ const confirmarPedido = () => {
   border-color: #8C7355;
 }
 
-/* Estilos de la Columna Resumen */
 .resumen-final {
   flex: 1;
-  background-color: #F7F5F0;
+  background-color: #FDFCF7;
   border: 1px solid #EAEAEA;
   padding: 2rem;
   border-radius: 8px;
 }
 
 .lista-resumen-checkout {
-  max-height: 240px;
+  max-height: 260px;
   overflow-y: auto;
   margin-bottom: 1.5rem;
 }
 
+/* 🚨 Estilos para los ítems detallados con foto en el resumen */
 .item-checkout {
   display: flex;
   align-items: center;
@@ -259,9 +249,21 @@ const confirmarPedido = () => {
   border-bottom: 1px solid #EAEAEA;
 }
 
-.cant-item {
-  font-weight: bold;
-  color: #8C7355;
+.item-mini-chico {
+  width: 50px;
+  height: 50px;
+  background-color: #F7F5F0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #EAEAEA;
+  flex-shrink: 0;
+}
+
+.foto-mini-chica {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .detalles-item {
@@ -269,13 +271,13 @@ const confirmarPedido = () => {
 }
 
 .detalles-item h4 {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #333333;
   margin: 0;
 }
 
 .detalles-item p {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #777777;
   margin: 0;
 }
@@ -286,7 +288,6 @@ const confirmarPedido = () => {
   font-size: 0.95rem;
 }
 
-/* Totales */
 .totales-checkout {
   margin-bottom: 2rem;
 }
@@ -317,11 +318,10 @@ const confirmarPedido = () => {
   color: #8C7355;
 }
 
-/* Botón de Confirmación */
 .btn-confirmar {
   display: block;
   width: 100%;
-  background-color: #8C7355;
+  background-color: #C0955B; /* Tono dorado/mostaza oficial */
   color: #FFFFFF;
   border: none;
   padding: 1rem;
@@ -334,13 +334,7 @@ const confirmarPedido = () => {
 }
 
 .btn-confirmar:hover {
-  background-color: #6E5941;
-}
-
-.aclaracion-seguridad {
-  font-size: 0.85rem;
-  color: #2e7d32;
-  margin-bottom: 1.5rem;
+  background-color: #A37F4C;
 }
 
 .nota-pago {

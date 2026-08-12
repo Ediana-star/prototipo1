@@ -47,7 +47,7 @@ import { RouterLink } from 'vue-router'
 
     <!-- Parte inferior: Acceso Admin + Copyright -->
     <div class="footer-bottom">
-      <RouterLink to="/login" class="link-admin">
+      <RouterLink to="/admin/login" class="link-admin">
         🔒 Acceso Administrador
       </RouterLink>
       <p class="copyright">

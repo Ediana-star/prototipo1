@@ -1,9 +1,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
-import { useTiendaStore } from '../../stores/useTiendaStore'
+// Comentamos Pinia por ahora porque vamos a validar usando la memoria del navegador (localStorage)
+// import { useTiendaStore } from '../../stores/useTiendaStore' 
 
-const store = useTiendaStore()
+// const store = useTiendaStore()
 const router = useRouter()
 
 const usuario = ref('')
@@ -13,17 +14,31 @@ const errorMsg = ref('')
 const iniciarSesion = () => {
   errorMsg.value = ''
 
+  // 1. Validamos que no dejen campos vacíos
   if (!usuario.value.trim() || !clave.value.trim()) {
     errorMsg.value = 'Por favor, completá todos los campos.'
     return
   }
 
-  // Intentamos iniciar sesión mediante la acción de Pinia
-  const exito = store.loginAdmin(usuario.value, clave.value)
+  // 2. Traemos los datos que guardamos en la pantalla de /setup
+  const adminGuardado = localStorage.getItem('adminEmail')
+  const claveGuardada = localStorage.getItem('adminPassword')
 
-  if (exito) {
-    router.push('/admin') // Redirigimos al Dashboard
+  // 3. Verificamos si el sistema ya fue instalado (si hay algo en la memoria)
+  if (!adminGuardado || !claveGuardada) {
+    errorMsg.value = 'El sistema aún no fue configurado. Por favor, instalá desde /setup primero.'
+    return
+  }
+
+  // 4. Comparamos lo que escribió el profe con lo que guardamos
+  if (usuario.value === adminGuardado && clave.value === claveGuardada) {
+    // ¡Éxito! Guardamos una "llave" temporal para saber que la sesión está activa
+    localStorage.setItem('sesionIniciada', 'true')
+    
+    // Lo mandamos directo a la tabla de productos (asegurate de que la ruta sea correcta)
+    router.push('/admin/catalogo') 
   } else {
+    // Error en las credenciales
     errorMsg.value = 'Credenciales inválidas. Verificá tu usuario y contraseña.'
   }
 }

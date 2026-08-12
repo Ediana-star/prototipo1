@@ -4,7 +4,22 @@ import ShopHeader from '../../components/shop/ShopHeader.vue'
 import ShopFooter from '../../components/shop/ShopFooter.vue'
 import { useTiendaStore } from '../../stores/useTiendaStore'
 
+// --- Importaciones para el Carrusel Swiper ---
+import { Swiper, SwiperSlide } from 'swiper/vue'
+import { Autoplay, EffectFade } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/effect-fade'
+
+// --- Importación de tus imágenes ---
+// Asegurate de que estas rutas coincidan con tu estructura
+import img1 from '@/assets/images/lentesLampara.jpg'
+import img2 from '@/assets/images/vest.jpg'
+import img3 from '@/assets/images/carteraUnias.jpg'
+
 const store = useTiendaStore()
+
+// Módulos que usa Swiper para autoplay y el efecto desvanecimiento
+const swiperModules = [Autoplay, EffectFade]
 </script>
 
 <template>
@@ -12,18 +27,66 @@ const store = useTiendaStore()
 
   <main class="home-container">
     
-    <!-- 🌟 1. BANNER PRINCIPAL (HERO SECTION) -->
-    <section class="hero-banner">
-      <div class="hero-contenido">
-        <span class="hero-subtitulo">Nueva Temporada 2026</span>
-        <h1 class="hero-titulo">Sencillez, tendencia y comodidad.</h1>
-        <p class="hero-descripcion">
-          Diseños pensados para acompañar tu día a día con estilo propio. Descubrí prendas exclusivas hechas para vos.
-        </p>
-        <RouterLink to="/catalogo" class="btn-hero-cta">
-          Explorar Colección
-        </RouterLink>
-      </div>
+    <!-- 🌟 1. BANNER PRINCIPAL (CARRUSEL SWIPER) -->
+    <section class="hero-banner-slider">
+     <swiper
+        :modules="swiperModules"
+        :slides-per-view="1"
+        effect="fade"
+        :fade-effect="{ crossFade: true }"
+        :speed="1200"
+        :loop="true"
+        :autoplay="{ delay: 4500, disableOnInteraction: false }"
+        class="mySwiper"
+      >
+        <!-- Slide 1 -->
+        <swiper-slide>
+          <div class="slide-content" :style="{ backgroundImage: `url(${img1})` }">
+            <div class="hero-contenido">
+              <span class="hero-subtitulo">Nueva Temporada 2026</span>
+              <h1 class="hero-titulo">Sencillez, tendencia y comodidad.</h1>
+              <p class="hero-descripcion">
+                Diseños pensados para acompañar tu día a día con estilo propio. Descubrí prendas exclusivas hechas para vos.
+              </p>
+              <RouterLink to="/catalogo" class="btn-hero-cta">
+                Explorar Colección
+              </RouterLink>
+            </div>
+          </div>
+        </swiper-slide>
+
+        <!-- Slide 2 -->
+        <swiper-slide>
+          <div class="slide-content" :style="{ backgroundImage: `url(${img2})` }">
+            <div class="hero-contenido">
+              <span class="hero-subtitulo">Colección Urbana</span>
+              <h1 class="hero-titulo">Elegancia en cada paso.</h1>
+              <p class="hero-descripcion">
+                Renová tu armario con tonos cálidos y texturas suaves que marcan la diferencia.
+              </p>
+              <RouterLink to="/catalogo" class="btn-hero-cta">
+                Explorar Colección
+              </RouterLink>
+            </div>
+          </div>
+        </swiper-slide>
+
+        <!-- Slide 3 -->
+        <swiper-slide>
+          <div class="slide-content" :style="{ backgroundImage: `url(${img3})` }">
+            <div class="hero-contenido">
+              <span class="hero-subtitulo">Accesorios Destacados</span>
+              <h1 class="hero-titulo">El toque final perfecto.</h1>
+              <p class="hero-descripcion">
+                Completá tu look con detalles que resaltan tu personalidad vayas donde vayas.
+              </p>
+              <RouterLink to="/catalogo" class="btn-hero-cta">
+                Explorar Colección
+              </RouterLink>
+            </div>
+          </div>
+        </swiper-slide>
+      </swiper>
     </section>
 
     <!-- 🏷️ 2. SECCIÓN DE CATEGORÍAS DESTACADAS -->
@@ -31,38 +94,31 @@ const store = useTiendaStore()
       <h2 class="titulo-seccion">Comprá por Categoría</h2>
       <p class="subtitulo-seccion">Encuentra exactamente lo que estás buscando</p>
       
-     <!-- Buscá la grilla de categorías y cambiá los enlaces por estos: -->
-<div class="grilla-categorias-home">
-  
-  <div class="tarjeta-cat-home">
-    <div class="cat-imagen-placeholder">👕</div>
-    <h3>Camisetas</h3>
-    <!-- 👇 CAMBIADO -->
-    <RouterLink to="/catalogo?categoria=Camisetas" class="link-cat">Ver más →</RouterLink>
-  </div>
+      <div class="grilla-categorias-home">
+        <div class="tarjeta-cat-home">
+          <div class="cat-imagen-placeholder">👕</div>
+          <h3>Camisetas</h3>
+          <RouterLink to="/catalogo?categoria=Camisetas" class="link-cat">Ver más →</RouterLink>
+        </div>
 
-  <div class="tarjeta-cat-home">
-    <div class="cat-imagen-placeholder">🧥</div>
-    <h3>Hoodies</h3>
-    <!-- 👇 CAMBIADO -->
-    <RouterLink to="/catalogo?categoria=Hoodies" class="link-cat">Ver más →</RouterLink>
-  </div>
+        <div class="tarjeta-cat-home">
+          <div class="cat-imagen-placeholder">🧥</div>
+          <h3>Hoodies</h3>
+          <RouterLink to="/catalogo?categoria=Hoodies" class="link-cat">Ver más →</RouterLink>
+        </div>
 
-  <div class="tarjeta-cat-home">
-    <div class="cat-imagen-placeholder">👖</div>
-    <h3>Pantalones</h3>
-    <!-- 👇 CAMBIADO -->
-    <RouterLink to="/catalogo?categoria=Pantalones" class="link-cat">Ver más →</RouterLink>
-  </div>
+        <div class="tarjeta-cat-home">
+          <div class="cat-imagen-placeholder">👖</div>
+          <h3>Pantalones</h3>
+          <RouterLink to="/catalogo?categoria=Pantalones" class="link-cat">Ver más →</RouterLink>
+        </div>
 
-  <div class="tarjeta-cat-home">
-    <div class="cat-imagen-placeholder">👜</div>
-    <h3>Accesorios</h3>
-    <!-- 👇 CAMBIADO -->
-    <RouterLink to="/catalogo?categoria=Accesorios" class="link-cat">Ver más →</RouterLink>
-  </div>
-
-</div>
+        <div class="tarjeta-cat-home">
+          <div class="cat-imagen-placeholder">👜</div>
+          <h3>Accesorios</h3>
+          <RouterLink to="/catalogo?categoria=Accesorios" class="link-cat">Ver más →</RouterLink>
+        </div>
+      </div>
     </section>
 
     <!-- 🍂 3. BLOQUE SOBRE LA MARCA (MANIFIESTO) -->
@@ -85,18 +141,51 @@ const store = useTiendaStore()
   min-height: 80vh;
 }
 
-/* --- Estilos del Banner Principal --- */
-.hero-banner {
-  background-color: #F3EFE9; /* Un beige un toque más profundo y cálido */
-  padding: 6rem 5%;
+/* --- Estilos del Banner Principal (Carrusel) --- */
+.hero-banner-slider {
+  height: 550px;
+  background-color: #F3EFE9;
+  position: relative;
+}
+
+.mySwiper {
+  width: 100%;
+  height: 100%;
+}
+
+.slide-content {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center 15%; /* Ajusta esto si ves que corta la cabeza de las modelos */
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  min-height: 450px;
+  padding: 0 5%;
+  position: relative;
+}
+
+/* Degrado sutil para que el texto siempre sea legible sin importar la foto de fondo */
+.slide-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to right, rgba(243, 239, 233, 0.95) 0%, rgba(243, 239, 233, 0.6) 45%, rgba(243, 239, 233, 0) 100%);
+  z-index: 1;
 }
 
 .hero-contenido {
   max-width: 600px;
+  position: relative;
+  z-index: 2; /* Para que quede por encima del degradado */
+}
+
+/* Suaviza la transición entre fotos (Fade elegante de 1.2 segundos) */
+.swiper-fade .swiper-slide {
+  transition-duration: 1200ms !important;
 }
 
 .hero-subtitulo {
@@ -112,11 +201,11 @@ const store = useTiendaStore()
   color: #333333;
   margin: 1rem 0;
   line-height: 1.2;
-  font-family: 'Playfair Display', serif; /* Si tenés una fuente serif, si no usa la de por defecto */
+  font-family: 'Playfair Display', serif;
 }
 
 .hero-descripcion {
-  color: #666666;
+  color: #555555;
   font-size: 1.1rem;
   line-height: 1.6;
   margin-bottom: 2.5rem;
@@ -137,6 +226,21 @@ const store = useTiendaStore()
 
 .btn-hero-cta:hover {
   background-color: #6E5941;
+}
+
+/* --- Ajustes Mobile para el Slider --- */
+@media (max-width: 768px) {
+  .slide-content::before {
+    /* En móvil el degradado cubre todo para que se lea el texto centrado */
+    background: rgba(243, 239, 233, 0.85); 
+  }
+  .slide-content {
+    justify-content: center;
+    text-align: center;
+  }
+  .hero-titulo {
+    font-size: 2.2rem;
+  }
 }
 
 /* --- Estilos de Categorías --- */

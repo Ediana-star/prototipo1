@@ -38,17 +38,28 @@ const router = createRouter({
     },
 
     // ==========================================
+    // ⚙️ RUTAS INDEPENDIENTES (Sin el menú lateral)
+    // ==========================================
+    {
+      path: '/setup',
+      name: 'setup',
+      component: () => import('../views/admin/SetupView.vue')
+    },
+    {
+      // Fíjate que le pusimos la ruta completa aquí y la sacamos de los hijos de abajo
+      path: '/admin/login', 
+      name: 'admin-login',
+      component: () => import('../views/admin/LoginView.vue') 
+    },
+
+    // ==========================================
     // ⚙️ RUTAS DEL ADMINISTRADOR (CORREGIDO Y SIN CONFUSIONES)
     // ==========================================
     {
       path: '/admin',
       component: () => import('../views/admin/AdminView.vue'), // 1. El caparazón principal
       children: [
-        {
-          path: '', // Cuando entran a /admin a secas
-          name: 'admin-dashboard',
-          component: () => import('../views/admin/AdminDashboardView.vue') // 2. El Escritorio de las tarjetas
-        },
+        
         {
           path: 'catalogo',
           name: 'admin-catalogo',
@@ -60,23 +71,37 @@ const router = createRouter({
           component: () => import('../views/admin/AdminAddProductView.vue') // 4. Agregar
         },
         {
-          path: 'pedidos',
-          name: 'admin-pedidos',
-          component: () => import('../views/admin/AdminOrdersView.vue') // 5. Pedidos
-        },
-        {
-          path: 'clientes',
-          name: 'admin-clientes',
-          component: () => import('../views/admin/AdminClientsView.vue') // 6. Clientes
-        },
-        {
           path: 'configuracion',
           name: 'admin-configuracion',
           component: () => import('../views/admin/AdminConfigView.vue') // 7. Configuración
-        }
+        },
       ]
     }
+
   ]
 })
+// ==========================================
+// 🛡️ EL "PORTERO" DE SEGURIDAD (Navigation Guard)
+// ==========================================
+router.beforeEach((to, from, next) => {
+  // 1. Definimos cuáles son las rutas que REQUIEREN sesión
+  // Si la ruta empieza con "/admin", es privada.
+  const esRutaProtegida = to.path.startsWith('/admin');
+  
+  // 2. Definimos cuáles son las rutas que están permitidas sin sesión
+  // El login y el setup son las únicas excepciones
+  const esPaginaPublica = to.path === '/admin/login' || to.path === '/setup';
 
+  // 3. Verificamos la "llave" de sesión
+  const sesionIniciada = localStorage.getItem('sesionIniciada') === 'true';
+
+  if (esRutaProtegida && !esPaginaPublica && !sesionIniciada) {
+    // Si quiere entrar a algo protegido, no es una página pública, y no tiene sesión...
+    // ¡LO MANDAMOS AL LOGIN!
+    next('/admin/login');
+  } else {
+    // Si no, lo dejamos pasar
+    next();
+  }
+});
 export default router
