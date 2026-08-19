@@ -11,28 +11,57 @@ const router = useRouter()
 const nombre = ref('')
 const telefono = ref('')
 const direccion = ref('')
-const notas = ref('')
 
 const totalPagar = computed(() => {
   return store.carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0)
 })
 
-// 🚨 BRECHA 1: Función actualizada para conectar con la API de WhatsApp (CU-03 Paso 10)
+// Variables para controlar la notificación
+const mostrarNotificacion = ref(false)
+const mensajeNotificacion = ref('')
+const tipoNotificacion = ref('error') // 'exito' o 'error'
+
+// Función auxiliar para mostrar el cartel
+const mostrarAviso = (mensaje, tipo = 'error') => {
+  mensajeNotificacion.value = mensaje
+  tipoNotificacion.value = tipo
+  mostrarNotificacion.value = true
+  
+  setTimeout(() => {
+    mostrarNotificacion.value = false
+  }, 3000)
+}
+
 const confirmarPedido = () => {
   if (!nombre.value || !telefono.value || !direccion.value) {
-    alert('Por favor, completá todos los campos obligatorios (*) para el envío.')
+    mostrarAviso('Por favor, completá todos los campos obligatorios (*) para el envío.', 'error')
     return
   }
 
-  // 1. Preparamos el mensaje codificado para la URL de WhatsApp
-  const numeroWhatsApp = "59899123456" // Reemplaza con el número real de la tienda
-  const mensaje = `Hola, soy ${nombre.value}, acabo de realizar un pedido en la web por un total de $${totalPagar.value}. Mi dirección de envío es: ${direccion.value}. Teléfono de contacto: ${telefono.value}.`
-  const mensajeCodificado = encodeURIComponent(mensaje)
+  const numeroWhatsApp = "59898630403"
 
-  // 2. Vaciamos el carrito en Pinia y registramos la orden
+  const listaProductos = store.carrito
+    .map(item => `• ${item.cantidad}x ${item.nombre} (Talle: ${item.talle}) - $${item.precio * item.cantidad}`)
+    .join('\n')
+
+  const mensaje = `Hola, soy *${nombre.value}*. Acabo de realizar un pedido:\n\n` +
+                  `*Detalle del Pedido:*\n${listaProductos}\n\n` +
+                  `*Total:* $${totalPagar.value}\n` +
+                  `*Dirección:* ${direccion.value}\n` +
+                  `*Teléfono:* ${telefono.value}`
+
+  // 1. Guardamos el pedido en el Admin como "Pendiente"
+  store.crearPedido(
+    { nombre: nombre.value, telefono: telefono.value, direccion: direccion.value },
+    store.carrito,
+    totalPagar.value
+  )
+
+  // 2. Vaciamos el carrito
   store.carrito = []
 
-  // 3. Abrimos WhatsApp en una nueva pestaña y redirigimos al inicio
+  // 3. Redirigimos a WhatsApp e Inicio
+  const mensajeCodificado = encodeURIComponent(mensaje)
   window.open(`https://wa.me/${numeroWhatsApp}?text=${mensajeCodificado}`, '_blank')
   router.push('/')
 }
@@ -79,7 +108,6 @@ const confirmarPedido = () => {
           >
         </div>
 
-        <!-- 🚨 BRECHA 2: Cambiamos a textarea expansible según requisitos del CU-03 -->
         <div class="campo">
           <label for="direccion">Dirección de envío *</label>
           <textarea 
@@ -96,11 +124,10 @@ const confirmarPedido = () => {
         </p>
       </form>
 
-      <!-- Columna Derecha: Resumen de Compra (CU-03 Paso 2) -->
+      <!-- Columna Derecha: Resumen de Compra -->
       <div class="resumen-final">
         <h2>Resumen de Compra</h2>
         
-        <!-- 🚨 BRECHA 3: Estructura detallada con miniatura, cantidad y precio -->
         <div class="lista-resumen-checkout">
           <div class="item-checkout" v-for="item in store.carrito" :key="item.id + item.talle">
             <div class="item-mini-chico">
@@ -140,6 +167,13 @@ const confirmarPedido = () => {
 
     </div>
   </main>
+
+  <!-- Cartelito flotante dinámico -->
+  <div v-if="mostrarNotificacion" :class="['toast-notificacion', tipoNotificacion]">
+    <span v-if="tipoNotificacion === 'exito'" class="icono-toast">✓</span>
+    <span v-else class="icono-toast">!</span>
+    <p>{{ mensajeNotificacion }}</p>
+  </div>
 
   <ShopFooter />
 </template>
@@ -184,7 +218,7 @@ const confirmarPedido = () => {
 
 .formulario-envio {
   flex: 1.5;
-  background-color: #FDFCF7; /* Tono cálido de los mockups */
+  background-color: #FDFCF7;
   border: 1px solid #EAEAEA;
   padding: 2rem;
   border-radius: 8px;
@@ -240,7 +274,6 @@ const confirmarPedido = () => {
   margin-bottom: 1.5rem;
 }
 
-/* 🚨 Estilos para los ítems detallados con foto en el resumen */
 .item-checkout {
   display: flex;
   align-items: center;
@@ -321,7 +354,7 @@ const confirmarPedido = () => {
 .btn-confirmar {
   display: block;
   width: 100%;
-  background-color: #C0955B; /* Tono dorado/mostaza oficial */
+  background-color: #C0955B;
   color: #FFFFFF;
   border: none;
   padding: 1rem;
@@ -342,5 +375,55 @@ const confirmarPedido = () => {
   color: #666666;
   margin-top: 1.5rem;
   line-height: 1.4;
+}
+
+/* Estilos de la notificación flotante */
+.toast-notificacion {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 1000;
+  font-weight: 500;
+  animation: aparecer 0.3s ease-out;
+  background-color: #FDFCF7;
+  color: #333333;
+}
+
+.toast-notificacion.exito {
+  border-left: 5px solid #C0955B; 
+}
+
+.toast-notificacion.exito .icono-toast {
+  background-color: #C0955B;
+}
+
+.toast-notificacion.error {
+  border-left: 5px solid #C0392B; 
+}
+
+.toast-notificacion.error .icono-toast {
+  background-color: #C0392B;
+}
+
+.icono-toast {
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

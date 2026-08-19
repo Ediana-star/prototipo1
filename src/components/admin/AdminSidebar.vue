@@ -11,17 +11,15 @@ import { RouterLink } from 'vue-router'
     </div>
 
     <!-- Menú de Navegación Interno -->
-  <!-- Buscá el <nav> de tu AdminSidebar y dejalo así: -->
-  <nav class="sidebar-menu">
-      
+    <nav class="sidebar-menu">
+      <RouterLink to="/admin/pedidos" class="menu-item" active-class="activo">
+        📋 Gestión de Pedidos
+      </RouterLink>
+
       <RouterLink to="/admin/catalogo" class="menu-item" active-class="activo">
         📦 Catálogo de Productos
       </RouterLink>
-      
 
-      <RouterLink to="/admin/configuracion" class="menu-item" active-class="activo">
-        ⚙️ Configuración del Sitio
-      </RouterLink>
     </nav>
 
     <!-- Botón de Salida al pie de la barra -->
@@ -37,7 +35,7 @@ import { RouterLink } from 'vue-router'
 .admin-sidebar {
   width: 260px;
   height: 100vh;
-  background-color: #4A3B2C; /* Un marrón chocolate oscuro y profesional */
+  background-color: #4A3B2C;
   color: #F7F5F0;
   display: flex;
   flex-direction: column;
@@ -95,7 +93,6 @@ import { RouterLink } from 'vue-router'
   color: #FFFFFF;
 }
 
-/* Esta clase se activa sola gracias a Vue Router cuando estamos en esa pantalla */
 .menu-item.activo {
   background-color: #8C7355;
   color: #FFFFFF;

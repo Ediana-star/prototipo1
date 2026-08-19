@@ -15,11 +15,8 @@ const producto = computed(() => {
 })
 
 const talleSeleccionado = ref('')
-
-// 🚨 BRECHA 1: Creamos el estado para la cantidad (por defecto en 1)
 const cantidadSeleccionada = ref(1)
 
-// 🚨 Funciones para aumentar o disminuir la cantidad sin bajar de 1
 const aumentarCantidad = () => {
   cantidadSeleccionada.value++
 }
@@ -30,16 +27,30 @@ const disminuirCantidad = () => {
   }
 }
 
+// Variables para controlar la notificación
+const mostrarNotificacion = ref(false)
+const mensajeNotificacion = ref('')
+const tipoNotificacion = ref('exito') // 'exito' o 'error'
+
+// Función auxiliar para mostrar el cartel
+const mostrarAviso = (mensaje, tipo) => {
+  mensajeNotificacion.value = mensaje
+  tipoNotificacion.value = tipo
+  mostrarNotificacion.value = true
+  
+  setTimeout(() => {
+    mostrarNotificacion.value = false
+  }, 3000)
+}
+
 const agregarAlCarritoReal = () => {
   if (!talleSeleccionado.value) {
-    alert('Por favor, seleccioná un talle antes de agregar al carrito.')
+    mostrarAviso('Por favor, seleccioná un talle antes de agregar al carrito.', 'error')
     return
   }
   
-  // 🚨 BRECHA 2: Pasamos la cantidad seleccionada a la tienda Pinia
   store.agregarAlCarrito(producto.value, talleSeleccionado.value, cantidadSeleccionada.value)
-  
-  alert(`¡Listo! Agregaste ${cantidadSeleccionada.value} unidad(es) de ${producto.value.nombre} (Talle: ${talleSeleccionado.value}) al carrito.`)
+  mostrarAviso(`¡Agregaste ${cantidadSeleccionada.value} prenda(s) al carrito!`, 'exito')
 }
 </script>
 
@@ -65,17 +76,10 @@ const agregarAlCarritoReal = () => {
         <p class="precio">${{ producto.precio }}</p>
         <p class="descripcion">{{ producto.descripcion }}</p>
 
-        <!-- Contenedor flex para Talles y Cantidad -->
         <div class="controles-compra">
-          
           <div class="seccion-talles">
             <h3>Talles disponibles</h3>
             <div class="lista-talles">
-              <!-- 
-                🚨 BRECHA 3 (Requisito futuro): 
-                Cuando Pinia maneje el stock por talle, deberás agregar aquí la condición:
-                :disabled="!producto.stockTalles[talle] > 0"
-              -->
               <button 
                 v-for="talle in producto.talles" 
                 :key="talle"
@@ -87,16 +91,13 @@ const agregarAlCarritoReal = () => {
             </div>
           </div>
 
-          <!-- 🚨 BRECHA 1: Selector de Cantidad -->
           <div class="seccion-cantidad">
-             <!-- Puedes omitir el h3 si quieres que se vea igual al mockup -->
             <div class="selector-cantidad">
               <button class="btn-cant" @click="disminuirCantidad" :disabled="cantidadSeleccionada === 1">−</button>
               <span class="numero-cant">{{ cantidadSeleccionada }}</span>
               <button class="btn-cant" @click="aumentarCantidad">+</button>
             </div>
           </div>
-
         </div>
 
         <button class="btn-agregar" @click="agregarAlCarritoReal">
@@ -112,11 +113,17 @@ const agregarAlCarritoReal = () => {
     <RouterLink to="/catalogo" class="btn-volver">Volver al Catálogo</RouterLink>
   </main>
 
+  <!-- Cartelito flotante dinámico -->
+  <div v-if="mostrarNotificacion" :class="['toast-notificacion', tipoNotificacion]">
+    <span v-if="tipoNotificacion === 'exito'" class="icono-toast">✓</span>
+    <span v-else class="icono-toast">!</span>
+    <p>{{ mensajeNotificacion }}</p>
+  </div>
+
   <ShopFooter />
 </template>
 
 <style scoped>
-/* Conserve los estilos existentes y añadí los nuevos al final */
 .detalle-container {
   padding: 2rem 5%;
   min-height: 70vh;
@@ -190,16 +197,15 @@ const agregarAlCarritoReal = () => {
   margin-bottom: 2rem;
 }
 
-/* 🚨 Estilos Nuevos para Controles de Compra */
 .controles-compra {
   display: flex;
-  align-items: flex-end; /* Alinea los elementos a la parte inferior */
+  align-items: flex-end;
   gap: 2rem;
   margin-bottom: 2.5rem;
 }
 
 .seccion-talles h3 {
-  font-size: 0.9rem; /* Un poco más pequeño como en el mockup */
+  font-size: 0.9rem;
   color: #333333;
   margin-bottom: 0.8rem;
 }
@@ -226,11 +232,10 @@ const agregarAlCarritoReal = () => {
 
 .btn-talle.activo {
   border-color: #8C7355;
-  background-color: transparent; /* En el mockup el activo solo tiene el borde más oscuro */
+  background-color: transparent;
   font-weight: bold;
 }
 
-/* 🚨 Estilos Selector de Cantidad */
 .selector-cantidad {
   display: flex;
   align-items: center;
@@ -260,7 +265,7 @@ const agregarAlCarritoReal = () => {
 }
 
 .btn-agregar {
-  background-color: #C0955B; /* Color mostaza/dorado del mockup */
+  background-color: #C0955B;
   color: #FFFFFF;
   border: none;
   padding: 1.2rem 2rem;
@@ -280,5 +285,55 @@ const agregarAlCarritoReal = () => {
 .error {
   text-align: center;
   padding-top: 5rem;
+}
+
+/* Estilos de la notificación flotante */
+.toast-notificacion {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 1000;
+  font-weight: 500;
+  animation: aparecer 0.3s ease-out;
+  background-color: #FDFCF7;
+  color: #333333;
+}
+
+.toast-notificacion.exito {
+  border-left: 5px solid #C0955B; 
+}
+
+.toast-notificacion.exito .icono-toast {
+  background-color: #C0955B;
+}
+
+.toast-notificacion.error {
+  border-left: 5px solid #C0392B; 
+}
+
+.toast-notificacion.error .icono-toast {
+  background-color: #C0392B;
+}
+
+.icono-toast {
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

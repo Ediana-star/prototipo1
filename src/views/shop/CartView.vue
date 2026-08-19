@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import ShopHeader from '../../components/shop/ShopHeader.vue'
 import ShopFooter from '../../components/shop/ShopFooter.vue'
@@ -11,6 +11,28 @@ const store = useTiendaStore()
 const totalPagar = computed(() => {
   return store.carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0)
 })
+
+// Variables para controlar la notificación
+const mostrarNotificacion = ref(false)
+const mensajeNotificacion = ref('')
+const tipoNotificacion = ref('error') // 'exito' o 'error'
+
+// Función auxiliar para mostrar el cartel
+const mostrarAviso = (mensaje, tipo = 'error') => {
+  mensajeNotificacion.value = mensaje
+  tipoNotificacion.value = tipo
+  mostrarNotificacion.value = true
+  
+  setTimeout(() => {
+    mostrarNotificacion.value = false
+  }, 3000)
+}
+
+// Función para eliminar producto y mostrar la notificación
+const eliminarProducto = (item) => {
+  store.eliminarDelCarrito(item.id, item.talle)
+  mostrarAviso(`Quitaste "${item.nombre}" del carrito`, 'error')
+}
 </script>
 
 <template>
@@ -30,7 +52,6 @@ const totalPagar = computed(() => {
       <div class="lista-items">
         <div class="item-carrito" v-for="item in store.carrito" :key="item.id + item.talle">
           
-          <!-- Miniatura con la foto real del producto -->
           <div class="item-mini">
             <img 
               :src="item.imagen || item.producto?.imagen || 'https://via.placeholder.com/100?text=Sin+Foto'" 
@@ -46,7 +67,6 @@ const totalPagar = computed(() => {
           </div>
 
           <div class="item-cantidad">
-            <!-- 🚨 BRECHA 1: Agregamos :disabled cuando la cantidad es 1 (CU-02 A2) -->
             <button 
                @click="item.cantidad > 1 ? item.cantidad-- : null" 
                :disabled="item.cantidad === 1"
@@ -67,9 +87,8 @@ const totalPagar = computed(() => {
             <p>${{ item.precio * item.cantidad }}</p>
           </div>
 
-          <!-- 🚨 BRECHA 2: Cambiamos el tacho por la X acorde al mockup y CU-02 A4 -->
           <button 
-            @click="store.eliminarDelCarrito(item.id, item.talle)" 
+            @click="eliminarProducto(item)" 
             class="btn-eliminar"
             title="Eliminar producto"
           >
@@ -96,7 +115,6 @@ const totalPagar = computed(() => {
           <span>${{ totalPagar }}</span>
         </div>
 
-        <!-- 🚨 BRECHA 3: Cambiamos el texto a "Finalizar Compra" según CU-02 Paso 5 -->
         <RouterLink to="/checkout" class="btn-proceder">
           Finalizar Compra
         </RouterLink>
@@ -104,6 +122,13 @@ const totalPagar = computed(() => {
 
     </div>
   </main>
+
+  <!-- Cartelito flotante dinámico -->
+  <div v-if="mostrarNotificacion" :class="['toast-notificacion', tipoNotificacion]">
+    <span v-if="tipoNotificacion === 'exito'" class="icono-toast">✓</span>
+    <span v-else class="icono-toast">!</span>
+    <p>{{ mensajeNotificacion }}</p>
+  </div>
 
   <ShopFooter />
 </template>
@@ -155,7 +180,7 @@ const totalPagar = computed(() => {
   background-color: #6E5941;
 }
 
-/* Distribución del Carrito Lleno (2 Columnas) */
+/* Distribución del Carrito Lleno */
 .wrapper-carrito {
   display: flex;
   gap: 2.5rem;
@@ -169,7 +194,6 @@ const totalPagar = computed(() => {
   gap: 1.5rem;
 }
 
-/* Fila de cada producto */
 .item-carrito {
   display: flex;
   align-items: center;
@@ -218,7 +242,6 @@ const totalPagar = computed(() => {
   color: #666666;
 }
 
-/* Controles de más/menos cantidad */
 .item-cantidad {
   display: flex;
   align-items: center;
@@ -243,7 +266,6 @@ const totalPagar = computed(() => {
   background-color: #F0F0F0;
 }
 
-/* Estilo visual cuando el botón menos está deshabilitado */
 .btn-cant:disabled {
   color: #CCCCCC;
   cursor: not-allowed;
@@ -278,7 +300,6 @@ const totalPagar = computed(() => {
   color: #C0392B;
 }
 
-/* Columna de la Derecha: El Resumen */
 .resumen-compra {
   flex: 1;
   background-color: #FFFFFF;
@@ -323,7 +344,7 @@ const totalPagar = computed(() => {
 .btn-proceder {
   display: block;
   text-align: center;
-  background-color: #C0955B; /* Tono dorado/mostaza de la marca */
+  background-color: #C0955B;
   color: #FFFFFF;
   text-decoration: none;
   padding: 1rem;
@@ -337,5 +358,55 @@ const totalPagar = computed(() => {
 
 .btn-proceder:hover {
   background-color: #A37F4C;
+}
+
+/* Estilos de la notificación flotante */
+.toast-notificacion {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 1000;
+  font-weight: 500;
+  animation: aparecer 0.3s ease-out;
+  background-color: #FDFCF7;
+  color: #333333;
+}
+
+.toast-notificacion.exito {
+  border-left: 5px solid #C0955B; 
+}
+
+.toast-notificacion.exito .icono-toast {
+  background-color: #C0955B;
+}
+
+.toast-notificacion.error {
+  border-left: 5px solid #C0392B; 
+}
+
+.toast-notificacion.error .icono-toast {
+  background-color: #C0392B;
+}
+
+.icono-toast {
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

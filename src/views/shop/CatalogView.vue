@@ -10,6 +10,7 @@ const route = useRoute()
 
 const textoBusqueda = ref('')
 const talleSeleccionado = ref('Todos')
+const generoSeleccionado = ref('Todos')
 const ordenPrecio = ref('recientes') 
 
 const categoriaSeleccionada = ref(route.query.categoria || 'Todos')
@@ -21,7 +22,8 @@ watch(
   }
 )
 
-const categorias = ['Todos', 'Camisetas', 'Hoodies', 'Pantalones', 'Accesorios']
+const categorias = ['Todos', 'Remeras y Camisas', 'Camperas', 'Pantalones', 'Vestidos y Enteritos', 'Ropa Interior', 'Accesorios']
+const generosDisponibles = ['Todos', 'Mujer', 'Hombre', 'Unisex']
 const tallesDisponibles = ['Todos', 'S', 'M', 'L', 'XL', 'Único']
 
 // Sistema de Favoritos
@@ -43,10 +45,14 @@ const productosFiltrados = computed(() => {
     const coincideCategoria = categoriaSeleccionada.value === 'Todos' || 
                               producto.categoria === categoriaSeleccionada.value
 
+    const coincideGenero = generoSeleccionado.value === 'Todos' || 
+                            producto.genero === generoSeleccionado.value ||
+                            producto.genero === 'Unisex'
+
     const coincideTalle = talleSeleccionado.value === 'Todos' || 
                           producto.talles.includes(talleSeleccionado.value)
 
-    return coincideBusqueda && coincideCategoria && coincideTalle
+    return coincideBusqueda && coincideCategoria && coincideGenero && coincideTalle
   })
 
   if (ordenPrecio.value === 'menor-mayor') {
@@ -84,6 +90,19 @@ const productosFiltrados = computed(() => {
       </div>
 
       <div class="bloque-filtro">
+        <span class="etiqueta-filtro">Sección:</span>
+        <div class="grupo-botones">
+          <button 
+            v-for="gen in generosDisponibles" :key="gen"
+            :class="['btn-filtro', { activo: generoSeleccionado === gen }]"
+            @click="generoSeleccionado = gen"
+          >
+            {{ gen }}
+          </button>
+        </div>
+      </div>
+
+      <div class="bloque-filtro">
         <span class="etiqueta-filtro">Categorías:</span>
         <div class="grupo-botones">
           <button 
@@ -115,12 +134,10 @@ const productosFiltrados = computed(() => {
       <div class="tarjeta-producto" v-for="producto in productosFiltrados" :key="producto.id">
         
         <div class="contenedor-foto">
-          <!-- Botón de favoritos -->
           <button class="btn-favorito" @click.prevent="toggleFavorito(producto.id)">
              {{ favoritos.includes(producto.id) ? '🖤' : '🤍' }}
           </button>
           
-          <!-- Imagen con lazy loading, pero sin ser un enlace -->
           <img 
             loading="lazy" 
             :src="producto.imagen || 'https://via.placeholder.com/300?text=Sin+Foto'" 
@@ -130,16 +147,12 @@ const productosFiltrados = computed(() => {
         </div>
         
         <div class="info-producto">
-          <span class="categoria">{{ producto.categoria }}</span>
-          
-          <!-- Título normal, sin ser un enlace -->
+          <span class="categoria">{{ producto.genero }} | {{ producto.categoria }}</span>
           <h3 class="nombre">{{ producto.nombre }}</h3>
-          
           <p class="precio">${{ producto.precio }}</p>
           <p class="talles-tarjeta">Talles: {{ producto.talles.join(', ') }}</p>
         </div>
 
-        <!-- Este se mantiene como el ÚNICO enlace para entrar al producto -->
         <RouterLink :to="`/producto/${producto.id}`" class="btn-ver">
           Ver Detalles
         </RouterLink>
@@ -301,10 +314,9 @@ const productosFiltrados = computed(() => {
   width: 100%;
   background-color: #F7F5F0;
   overflow: hidden; 
-  position: relative; /* Clave para el corazón */
+  position: relative; 
 }
 
-/* Botón de favoritos */
 .btn-favorito {
   position: absolute;
   top: 10px;

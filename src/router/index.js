@@ -17,12 +17,12 @@ const router = createRouter({
       component: () => import('../views/shop/CatalogView.vue')
     },
     {
-      path: '/tabla-de-talles', // 👈 NUEVA RUTA DE TALLES
+      path: '/tabla-de-talles',
       name: 'tabla-de-talles',
       component: () => import('../views/shop/TallesView.vue')
     },
     {
-      path: '/producto/:id', // El ":id" permite que la URL cambie según la prenda (ej: /producto/1)
+      path: '/producto/:id',
       name: 'producto',
       component: () => import('../views/shop/ProductDetailView.vue')
     },
@@ -46,62 +46,56 @@ const router = createRouter({
       component: () => import('../views/admin/SetupView.vue')
     },
     {
-      // Fíjate que le pusimos la ruta completa aquí y la sacamos de los hijos de abajo
       path: '/admin/login', 
       name: 'admin-login',
       component: () => import('../views/admin/LoginView.vue') 
     },
 
     // ==========================================
-    // ⚙️ RUTAS DEL ADMINISTRADOR (CORREGIDO Y SIN CONFUSIONES)
+    // ⚙️ RUTAS DEL ADMINISTRADOR
     // ==========================================
     {
       path: '/admin',
-      component: () => import('../views/admin/AdminView.vue'), // 1. El caparazón principal
+      component: () => import('../views/admin/AdminView.vue'),
       children: [
-        
+        {
+          path: '',
+          redirect: { name: 'admin-pedidos' } // Redirige por defecto a pedidos al entrar a /admin
+        },
+        {
+          path: 'pedidos',
+          name: 'admin-pedidos',
+          component: () => import('../views/admin/AdminPedidosView.vue') // 👈 NUEVA RUTA DE PEDIDOS
+        },
         {
           path: 'catalogo',
           name: 'admin-catalogo',
-          component: () => import('../views/admin/AdminCatalogView.vue') // 3. Tabla de stock
+          component: () => import('../views/admin/AdminCatalogView.vue')
         },
         {
           path: 'agregar-producto',
           name: 'admin-agregar-producto',
-          component: () => import('../views/admin/AdminAddProductView.vue') // 4. Agregar
-        },
-        {
-          path: 'configuracion',
-          name: 'admin-configuracion',
-          component: () => import('../views/admin/AdminConfigView.vue') // 7. Configuración
-        },
+          component: () => import('../views/admin/AdminAddProductView.vue')
+        }
       ]
     }
 
   ]
 })
+
 // ==========================================
 // 🛡️ EL "PORTERO" DE SEGURIDAD (Navigation Guard)
 // ==========================================
 router.beforeEach((to, from, next) => {
-  // 1. Definimos cuáles son las rutas que REQUIEREN sesión
-  // Si la ruta empieza con "/admin", es privada.
   const esRutaProtegida = to.path.startsWith('/admin');
-  
-  // 2. Definimos cuáles son las rutas que están permitidas sin sesión
-  // El login y el setup son las únicas excepciones
   const esPaginaPublica = to.path === '/admin/login' || to.path === '/setup';
-
-  // 3. Verificamos la "llave" de sesión
   const sesionIniciada = localStorage.getItem('sesionIniciada') === 'true';
 
   if (esRutaProtegida && !esPaginaPublica && !sesionIniciada) {
-    // Si quiere entrar a algo protegido, no es una página pública, y no tiene sesión...
-    // ¡LO MANDAMOS AL LOGIN!
     next('/admin/login');
   } else {
-    // Si no, lo dejamos pasar
     next();
   }
 });
+
 export default router
