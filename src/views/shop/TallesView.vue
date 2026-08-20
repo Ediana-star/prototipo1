@@ -165,6 +165,8 @@ const medidas = [
 /* Tabla de valores */
 .tabla-responsive {
   overflow-x: auto;
+  /* Oculta la barra de scroll en navegadores webkit para un diseño más limpio, pero permite el swipe */
+  -webkit-overflow-scrolling: touch; 
 }
 
 table {
@@ -180,6 +182,8 @@ th {
   padding: 1rem 0.6rem;
   border-bottom: 2px solid #EAE5DF;
   letter-spacing: 0.5px;
+  /* Evita que los títulos se corten en varias líneas */
+  white-space: nowrap; 
 }
 
 td {
@@ -187,6 +191,8 @@ td {
   border-bottom: 1px solid #F3EFEA;
   color: #554A46;
   font-size: 0.95rem;
+  /* Mantiene los números en una sola línea */
+  white-space: nowrap;
 }
 
 .col-talle {
@@ -233,10 +239,46 @@ td {
   line-height: 1.4;
 }
 
-/* Adaptación a dispositivos móviles */
+/* --- ADAPTACIÓN A DISPOSITIVOS MÓVILES --- */
+
+/* Tablets y pantallas medianas */
 @media (max-width: 900px) {
   .grid-talles {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Pasa todo a una sola columna */
+  }
+}
+
+/* Celulares y pantallas pequeñas */
+@media (max-width: 600px) {
+  .talles-page {
+    padding: 1.5rem 1rem; /* Reduce el espacio a los costados de la pantalla */
+  }
+
+  .encabezado h1 {
+    font-size: 1.8rem; /* Achica el título principal */
+  }
+
+  .encabezado p {
+    font-size: 0.9rem;
+  }
+
+  .card-seccion {
+    padding: 1.2rem; /* Reduce el espacio interior de las tarjetas blancas */
+    gap: 1rem;
+  }
+
+  th {
+    padding: 0.8rem 0.5rem;
+    font-size: 0.75rem; /* Achica un poco la letra de la cabecera */
+  }
+
+  td {
+    padding: 0.8rem 0.5rem;
+    font-size: 0.85rem; /* Achica un poco los números */
+  }
+
+  .svg-silueta {
+    max-width: 180px; /* Evita que el dibujo ocupe demasiada pantalla */
   }
 }
 </style>

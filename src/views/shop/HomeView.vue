@@ -10,16 +10,23 @@ import { Autoplay, EffectFade } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/effect-fade'
 
-// --- Importación de tus imágenes ---
-// Asegurate de que estas rutas coincidan con tu estructura
+// --- Importación de imágenes del banner ---
 import img1 from '@/assets/images/lentesLampara.jpg'
 import img2 from '@/assets/images/vest.jpg'
 import img3 from '@/assets/images/carteraUnias.jpg'
 
 const store = useTiendaStore()
 
-// Módulos que usa Swiper para autoplay y el efecto desvanecimiento
 const swiperModules = [Autoplay, EffectFade]
+
+// Categorías destacadas con sus nombres EXACTOS y una foto representativa
+const categoriasDestacadas = [
+  { nombre: 'Remeras y Camisas', imagen: '/imagenes/camisa-hombre.jpeg' },
+  { nombre: 'Camperas', imagen: '/imagenes/campera-mujer.jpeg' },
+  { nombre: 'Pantalones', imagen: '/imagenes/jean-mujer.jpeg' },
+  { nombre: 'Vestidos y Enteritos', imagen: '/imagenes/vestido.jpeg' },
+  { nombre: 'Accesorios', imagen: '/imagenes/reloj-negro.jpeg' }
+]
 </script>
 
 <template>
@@ -27,9 +34,9 @@ const swiperModules = [Autoplay, EffectFade]
 
   <main class="home-container">
     
-    <!-- 🌟 1. BANNER PRINCIPAL (CARRUSEL SWIPER) -->
+    <!-- 🌟 1. BANNER PRINCIPAL -->
     <section class="hero-banner-slider">
-     <swiper
+      <swiper
         :modules="swiperModules"
         :slides-per-view="1"
         effect="fade"
@@ -39,7 +46,6 @@ const swiperModules = [Autoplay, EffectFade]
         :autoplay="{ delay: 4500, disableOnInteraction: false }"
         class="mySwiper"
       >
-        <!-- Slide 1 -->
         <swiper-slide>
           <div class="slide-content" :style="{ backgroundImage: `url(${img1})` }">
             <div class="hero-contenido">
@@ -55,7 +61,6 @@ const swiperModules = [Autoplay, EffectFade]
           </div>
         </swiper-slide>
 
-        <!-- Slide 2 -->
         <swiper-slide>
           <div class="slide-content" :style="{ backgroundImage: `url(${img2})` }">
             <div class="hero-contenido">
@@ -71,7 +76,6 @@ const swiperModules = [Autoplay, EffectFade]
           </div>
         </swiper-slide>
 
-        <!-- Slide 3 -->
         <swiper-slide>
           <div class="slide-content" :style="{ backgroundImage: `url(${img3})` }">
             <div class="hero-contenido">
@@ -89,39 +93,28 @@ const swiperModules = [Autoplay, EffectFade]
       </swiper>
     </section>
 
-    <!-- 🏷️ 2. SECCIÓN DE CATEGORÍAS DESTACADAS -->
+    <!-- 🏷️ 2. SECCIÓN DE CATEGORÍAS -->
     <section class="seccion-categorias">
       <h2 class="titulo-seccion">Comprá por Categoría</h2>
-      <p class="subtitulo-seccion">Encuentra exactamente lo que estás buscando</p>
+      <p class="subtitulo-seccion">Encontrá exactamente lo que estás buscando</p>
       
       <div class="grilla-categorias-home">
-        <div class="tarjeta-cat-home">
-          <div class="cat-imagen-placeholder">👕</div>
-          <h3>Camisetas</h3>
-          <RouterLink to="/catalogo?categoria=Camisetas" class="link-cat">Ver más →</RouterLink>
-        </div>
-
-        <div class="tarjeta-cat-home">
-          <div class="cat-imagen-placeholder">🧥</div>
-          <h3>Hoodies</h3>
-          <RouterLink to="/catalogo?categoria=Hoodies" class="link-cat">Ver más →</RouterLink>
-        </div>
-
-        <div class="tarjeta-cat-home">
-          <div class="cat-imagen-placeholder">👖</div>
-          <h3>Pantalones</h3>
-          <RouterLink to="/catalogo?categoria=Pantalones" class="link-cat">Ver más →</RouterLink>
-        </div>
-
-        <div class="tarjeta-cat-home">
-          <div class="cat-imagen-placeholder">👜</div>
-          <h3>Accesorios</h3>
-          <RouterLink to="/catalogo?categoria=Accesorios" class="link-cat">Ver más →</RouterLink>
-        </div>
+        <RouterLink 
+          v-for="cat in categoriasDestacadas" 
+          :key="cat.nombre"
+          :to="{ path: '/catalogo', query: { categoria: cat.nombre } }"
+          class="tarjeta-cat-home"
+        >
+          <img :src="cat.imagen" :alt="cat.nombre" class="cat-imagen-bg" />
+          <div class="cat-overlay">
+            <h3>{{ cat.nombre }}</h3>
+            <span class="link-cat">Ver colección →</span>
+          </div>
+        </RouterLink>
       </div>
     </section>
 
-    <!-- 🍂 3. BLOQUE SOBRE LA MARCA (MANIFIESTO) -->
+    <!-- 🍂 3. SOBRE LA MARCA -->
     <section class="sobre-nosotros">
       <div class="bloque-texto-marca">
         <h2>Sobre María Urbana</h2>
@@ -141,7 +134,7 @@ const swiperModules = [Autoplay, EffectFade]
   min-height: 80vh;
 }
 
-/* --- Estilos del Banner Principal (Carrusel) --- */
+/* --- Banner Principal (Desktop) --- */
 .hero-banner-slider {
   height: 550px;
   background-color: #F3EFE9;
@@ -157,7 +150,7 @@ const swiperModules = [Autoplay, EffectFade]
   width: 100%;
   height: 100%;
   background-size: cover;
-  background-position: center 15%; /* Ajusta esto si ves que corta la cabeza de las modelos */
+  background-position: center 15%;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -165,7 +158,6 @@ const swiperModules = [Autoplay, EffectFade]
   position: relative;
 }
 
-/* Degrado sutil para que el texto siempre sea legible sin importar la foto de fondo */
 .slide-content::before {
   content: '';
   position: absolute;
@@ -180,10 +172,9 @@ const swiperModules = [Autoplay, EffectFade]
 .hero-contenido {
   max-width: 600px;
   position: relative;
-  z-index: 2; /* Para que quede por encima del degradado */
+  z-index: 2;
 }
 
-/* Suaviza la transición entre fotos (Fade elegante de 1.2 segundos) */
 .swiper-fade .swiper-slide {
   transition-duration: 1200ms !important;
 }
@@ -228,22 +219,7 @@ const swiperModules = [Autoplay, EffectFade]
   background-color: #6E5941;
 }
 
-/* --- Ajustes Mobile para el Slider --- */
-@media (max-width: 768px) {
-  .slide-content::before {
-    /* En móvil el degradado cubre todo para que se lea el texto centrado */
-    background: rgba(243, 239, 233, 0.85); 
-  }
-  .slide-content {
-    justify-content: center;
-    text-align: center;
-  }
-  .hero-titulo {
-    font-size: 2.2rem;
-  }
-}
-
-/* --- Estilos de Categorías --- */
+/* --- Categorías (Desktop) --- */
 .seccion-categorias {
   padding: 5rem 5%;
   text-align: center;
@@ -253,6 +229,7 @@ const swiperModules = [Autoplay, EffectFade]
   font-size: 2rem;
   color: #333333;
   margin-bottom: 0.5rem;
+  font-family: 'Playfair Display', serif;
 }
 
 .subtitulo-seccion {
@@ -262,41 +239,68 @@ const swiperModules = [Autoplay, EffectFade]
 
 .grilla-categorias-home {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
 }
 
 .tarjeta-cat-home {
-  background-color: #FFFFFF;
-  border: 1px solid #EAEAEA;
-  padding: 2.5rem 1.5rem;
+  position: relative;
+  height: 300px;
   border-radius: 8px;
-  transition: transform 0.3s;
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
 
 .tarjeta-cat-home:hover {
-  transform: translateY(-5px);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
-.cat-imagen-placeholder {
-  font-size: 3.5rem;
-  margin-bottom: 1rem;
+.cat-imagen-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
 }
 
-.tarjeta-cat-home h3 {
-  font-size: 1.2rem;
-  color: #333333;
-  margin-bottom: 0.8rem;
+.tarjeta-cat-home:hover .cat-imagen-bg {
+  transform: scale(1.08);
+}
+
+.cat-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.1) 65%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  transition: background 0.3s ease;
+}
+
+.tarjeta-cat-home:hover .cat-overlay {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.2) 65%);
+}
+
+.cat-overlay h3 {
+  font-size: 1.3rem;
+  color: #FFFFFF;
+  margin-bottom: 0.3rem;
+  font-family: 'Playfair Display', serif;
 }
 
 .link-cat {
-  color: #8C7355;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 0.9rem;
+  color: #F3EFE9;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-/* --- Estilos sobre la marca --- */
+/* --- Sobre la marca (Desktop) --- */
 .sobre-nosotros {
   background-color: #FFFFFF;
   padding: 6rem 5%;
@@ -314,11 +318,123 @@ const swiperModules = [Autoplay, EffectFade]
   font-size: 1.8rem;
   color: #333333;
   margin-bottom: 1.5rem;
+  font-family: 'Playfair Display', serif;
 }
 
 .bloque-texto-marca p {
   color: #666666;
   line-height: 1.8;
   font-size: 1.1rem;
+}
+
+/* ========================================================
+   📱 ADAPTACIÓN RESPONSIVA PARA CELULARES Y TABLETS
+   ======================================================== */
+@media (max-width: 768px) {
+  /* Banner Principal */
+  .hero-banner-slider {
+    height: 460px;
+  }
+
+  .slide-content {
+    justify-content: center;
+    text-align: center;
+    padding: 0 1.2rem;
+  }
+
+  .slide-content::before {
+    background: linear-gradient(to top, rgba(243, 239, 233, 0.95) 15%, rgba(243, 239, 233, 0.75) 100%);
+  }
+
+  .hero-subtitulo {
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+  }
+
+  .hero-titulo {
+    font-size: 1.8rem;
+    margin: 0.6rem 0;
+  }
+
+  .hero-descripcion {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-hero-cta {
+    padding: 0.8rem 1.8rem;
+    font-size: 0.8rem;
+    width: 100%;
+    max-width: 250px;
+  }
+
+  /* Categorías en 2 columnas estilo app de moda */
+  .seccion-categorias {
+    padding: 3rem 1rem;
+  }
+
+  .titulo-seccion {
+    font-size: 1.5rem;
+  }
+
+  .subtitulo-seccion {
+    font-size: 0.9rem;
+    margin-bottom: 1.8rem;
+  }
+
+  .grilla-categorias-home {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+  }
+
+  .tarjeta-cat-home {
+    height: 180px;
+  }
+
+  .cat-overlay {
+    padding: 1rem 0.6rem;
+  }
+
+  .cat-overlay h3 {
+    font-size: 1rem;
+  }
+
+  .link-cat {
+    font-size: 0.75rem;
+  }
+
+  /* Sobre Nosotros */
+  .sobre-nosotros {
+    padding: 3rem 1.2rem;
+  }
+
+  .bloque-texto-marca h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .bloque-texto-marca p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-banner-slider {
+    height: 420px;
+  }
+
+  .hero-titulo {
+    font-size: 1.5rem;
+  }
+
+  .grilla-categorias-home {
+    gap: 0.6rem;
+  }
+
+  .tarjeta-cat-home {
+    height: 160px;
+  }
 }
 </style>

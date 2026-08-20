@@ -33,10 +33,42 @@ const mostrarAviso = (mensaje, tipo = 'error') => {
 }
 
 const confirmarPedido = () => {
-  if (!nombre.value || !telefono.value || !direccion.value) {
+  // 1. Saneamiento: Eliminar espacios al inicio/final y colapsar múltiples espacios internos a uno solo
+  const nombreLimpio = nombre.value.trim().replace(/\s+/g, ' ')
+  // Remover espacios, guiones y paréntesis del teléfono para validar sólo los dígitos numéricos
+  const telefonoLimpio = telefono.value.trim().replace(/[\s\-\(\)]/g, '')
+  const direccionLimpia = direccion.value.trim().replace(/\s+/g, ' ')
+
+  // 2. Validación de campos vacíos
+  if (!nombreLimpio || !telefonoLimpio || !direccionLimpia) {
     mostrarAviso('Por favor, completá todos los campos obligatorios (*) para el envío.', 'error')
     return
   }
+
+  // 3. Validación de Nombre (sólo letras, acentos y espacios. Mínimo 3 caracteres)
+  const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,60}$/
+  if (!regexNombre.test(nombreLimpio)) {
+    mostrarAviso('Ingresá un nombre válido (sólo letras, mínimo 3 caracteres).', 'error')
+    return
+  }
+
+  // 4. Validación de Teléfono (sólo números, opcional código +, entre 8 y 15 dígitos)
+  const regexTelefono = /^\+?[0-9]{8,15}$/
+  if (!regexTelefono.test(telefonoLimpio)) {
+    mostrarAviso('Ingresá un número de teléfono válido (sólo números, entre 8 y 15 dígitos).', 'error')
+    return
+  }
+
+  // 5. Validación de Dirección (mínimo 5 caracteres para evitar direcciones inventadas tipo "a")
+  if (direccionLimpia.length < 5) {
+    mostrarAviso('Ingresá una dirección de envío más específica (mínimo 5 caracteres).', 'error')
+    return
+  }
+
+  // Asignar los valores ya limpios
+  nombre.value = nombreLimpio
+  telefono.value = telefonoLimpio
+  direccion.value = direccionLimpia
 
   const numeroWhatsApp = "59898630403"
 
@@ -92,6 +124,7 @@ const confirmarPedido = () => {
             v-model="nombre" 
             placeholder="Ej: María García" 
             autocomplete="name"
+            maxlength="60"
             required
           >
         </div>
@@ -104,6 +137,7 @@ const confirmarPedido = () => {
             v-model="telefono" 
             placeholder="Ej: 099 123 456" 
             autocomplete="tel"
+            maxlength="20"
             required
           >
         </div>
@@ -115,6 +149,7 @@ const confirmarPedido = () => {
             v-model="direccion" 
             placeholder="Ej: Av. Principal 1234, Ap. 201 (Detallá piso o referencias)" 
             rows="3"
+            maxlength="200"
             required
           ></textarea>
         </div>
@@ -161,7 +196,7 @@ const confirmarPedido = () => {
         </div>
 
         <button type="button" @click="confirmarPedido" class="btn-confirmar">
-          [Confirmar Pedido]
+          Confirmar Pedido
         </button>
       </div>
 
@@ -179,6 +214,9 @@ const confirmarPedido = () => {
 </template>
 
 <style scoped>
+/* =========================================
+   ESTILOS BASE (Computadora / Pantallas grandes)
+   ========================================= */
 .checkout-container {
   padding: 2rem 5%;
   min-height: 65vh;
@@ -377,7 +415,7 @@ const confirmarPedido = () => {
   line-height: 1.4;
 }
 
-/* Estilos de la notificación flotante */
+/* Notificación flotante */
 .toast-notificacion {
   position: fixed;
   bottom: 2rem;
@@ -425,5 +463,63 @@ const confirmarPedido = () => {
 @keyframes aparecer {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   ESTILOS RESPONSIVOS (Tablets y Celulares)
+   ========================================= */
+@media (max-width: 900px) {
+  .checkout-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .wrapper-checkout {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .formulario-envio,
+  .resumen-final {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .campo input, 
+  .campo textarea {
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .titulo-checkout {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .item-checkout {
+    gap: 0.75rem;
+  }
+
+  .item-mini-chico {
+    width: 42px;
+    height: 42px;
+  }
+
+  .detalles-item h4 {
+    font-size: 0.85rem;
+  }
+
+  .precio-item {
+    font-size: 0.85rem;
+  }
+
+  .toast-notificacion {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    justify-content: center;
+    box-sizing: border-box;
+  }
 }
 </style>

@@ -17,6 +17,9 @@ const producto = computed(() => {
 const talleSeleccionado = ref('')
 const cantidadSeleccionada = ref(1)
 
+// Variable para controlar si el zoom de la imagen está abierto o cerrado
+const zoomAbierto = ref(false)
+
 const aumentarCantidad = () => {
   cantidadSeleccionada.value++
 }
@@ -62,12 +65,14 @@ const agregarAlCarritoReal = () => {
     <RouterLink to="/catalogo" class="btn-volver">← Volver al Catálogo</RouterLink>
 
     <div class="wrapper-producto">
-      <div class="foto-grande">
+      <!-- Foto con clic para abrir el zoom -->
+      <div class="foto-grande" @click="zoomAbierto = true" title="Hacé clic para ampliar">
         <img 
           :src="producto.imagen || 'https://via.placeholder.com/500?text=Sin+Foto'" 
           :alt="producto.nombre"
           class="imagen-detalle"
         />
+        <span class="pista-zoom">🔍 Clic para ampliar</span>
       </div>
 
       <div class="info-compra">
@@ -113,6 +118,17 @@ const agregarAlCarritoReal = () => {
     <RouterLink to="/catalogo" class="btn-volver">Volver al Catálogo</RouterLink>
   </main>
 
+  <!-- Modal Flotante de Imagen Ampliada -->
+  <div v-if="zoomAbierto" class="modal-zoom" @click="zoomAbierto = false">
+    <button class="btn-cerrar-zoom" @click="zoomAbierto = false">✕</button>
+    <img 
+      :src="producto.imagen || 'https://via.placeholder.com/500?text=Sin+Foto'" 
+      :alt="producto.nombre" 
+      class="imagen-zoom-pantalla"
+      @click.stop
+    />
+  </div>
+
   <!-- Cartelito flotante dinámico -->
   <div v-if="mostrarNotificacion" :class="['toast-notificacion', tipoNotificacion]">
     <span v-if="tipoNotificacion === 'exito'" class="icono-toast">✓</span>
@@ -152,12 +168,15 @@ const agregarAlCarritoReal = () => {
   background-color: #F7F5F0;
   flex: 1;
   height: 500px;
+  width: 100%; /* Asegura que tome el espacio adecuado */
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 8px;
   border: 1px solid #EAEAEA;
   overflow: hidden; 
+  cursor: zoom-in;
+  position: relative;
 }
 
 .imagen-detalle {
@@ -165,10 +184,30 @@ const agregarAlCarritoReal = () => {
   height: 100%;
   object-fit: cover; 
   display: block;
+  transition: transform 0.3s ease;
+}
+
+.foto-grande:hover .imagen-detalle {
+  transform: scale(1.02);
+}
+
+.pista-zoom {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #555555;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  pointer-events: none;
 }
 
 .info-compra {
   flex: 1;
+  width: 100%; /* Importante para dispositivos móviles */
 }
 
 .categoria {
@@ -212,6 +251,7 @@ const agregarAlCarritoReal = () => {
 
 .lista-talles {
   display: flex;
+  flex-wrap: wrap; /* Permite que los botones bajen de línea si no hay espacio */
   gap: 0.8rem;
 }
 
@@ -287,7 +327,53 @@ const agregarAlCarritoReal = () => {
   padding-top: 5rem;
 }
 
-/* Estilos de la notificación flotante */
+.modal-zoom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  cursor: zoom-out;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.imagen-zoom-pantalla {
+  max-width: 90%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  cursor: default;
+}
+
+.btn-cerrar-zoom {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-size: 2rem;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.btn-cerrar-zoom:hover {
+  opacity: 1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .toast-notificacion {
   position: fixed;
   bottom: 2rem;
@@ -335,5 +421,47 @@ const agregarAlCarritoReal = () => {
 @keyframes aparecer {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   NUEVO: ADAPTACIÓN PARA CELULARES
+   ========================================= */
+@media (max-width: 768px) {
+  .wrapper-producto {
+    flex-direction: column; /* Apila la imagen arriba y la información abajo */
+    gap: 1.5rem; /* Reduce la separación gigante entre la foto y el texto */
+  }
+
+  .foto-grande {
+    height: 350px; /* Evita que la foto sea excesivamente alta en celular */
+  }
+
+  .nombre {
+    font-size: 1.8rem; /* Achica el título del producto */
+    margin: 0.2rem 0 0.5rem 0;
+  }
+
+  .precio {
+    font-size: 1.5rem; /* Achica un poco el precio */
+    margin-bottom: 1rem;
+  }
+
+  .controles-compra {
+    flex-direction: column; /* Apila los talles y la cantidad */
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .btn-agregar {
+    padding: 1rem; /* Ajusta un poco el tamaño del botón para que no sea tan tosco */
+  }
+
+  /* Ajustamos el cartelito flotante para que no se salga de la pantalla */
+  .toast-notificacion {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    justify-content: center;
+  }
 }
 </style>

@@ -90,9 +90,14 @@ export const useTiendaStore = defineStore('tienda', () => {
   const totalArticulos = computed(() => {
     return carrito.value.reduce((suma, item) => suma + item.cantidad, 0)
   })
+const categorias = computed(() => {
+  const unicas = Array.from(new Set(productos.value.map(p => p.categoria)))
+  return ['Todos', ...unicas]
+})
 
   return {
     productos,
+    categorias,
     carrito,
     pedidos,
     configuracion,

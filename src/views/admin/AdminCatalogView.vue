@@ -1,12 +1,20 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue' // Agregamos 'computed'
 import { RouterLink } from 'vue-router'
 import { useTiendaStore } from '../../stores/useTiendaStore'
 
 const store = useTiendaStore()
-
-// Variable para controlar qué producto se está editando en el modal
 const productoEditando = ref(null)
+
+// 1. VARIABLE PARA EL BUSCADOR
+const busqueda = ref('')
+
+// 2. FILTRO SÚPER SIMPLE (Solo por nombre)
+const productosFiltrados = computed(() => {
+  return store.productos.filter(producto => 
+    producto.nombre.toLowerCase().includes(busqueda.value.toLowerCase())
+  )
+})
 
 // --- LÓGICA DEL CARTELITO ---
 const mostrarNotificacion = ref(false)
@@ -17,10 +25,7 @@ const mostrarAviso = (mensaje, tipo = 'exito') => {
   mensajeNotificacion.value = mensaje
   tipoNotificacion.value = tipo
   mostrarNotificacion.value = true
-  
-  setTimeout(() => {
-    mostrarNotificacion.value = false
-  }, 3000)
+  setTimeout(() => mostrarNotificacion.value = false, 3000)
 }
 // ----------------------------
 
@@ -34,12 +39,11 @@ const guardarCambios = () => {
     store.productos[index] = { ...productoEditando.value }
   }
   productoEditando.value = null 
-  
   mostrarAviso('¡Los cambios se guardaron correctamente!', 'exito')
 }
 
 const eliminarProducto = (id, nombre) => {
-  const confirmar = confirm(`¿Estás seguro de que querés eliminar "${nombre}" del catálogo?`)
+  const confirmar = confirm(`¿Estás seguro de que querés eliminar "${nombre}"?`)
   if (confirmar) {
     store.productos = store.productos.filter(p => p.id !== id)
     mostrarAviso(`El producto "${nombre}" fue eliminado.`, 'exito')
@@ -53,12 +57,21 @@ const eliminarProducto = (id, nombre) => {
     <div class="header-pantalla-admin">
       <div>
         <h1>Control de Inventario</h1>
-        <p class="subtitulo">Gestioná los productos visibles en la tienda, editá sus precios y controlá los talles.</p>
+        <p class="subtitulo">Gestioná los productos visibles en la tienda.</p>
       </div>
-      
       <RouterLink to="/admin/agregar-producto" class="btn-agregar-nuevo">
         ➕ Agregar Nuevo Producto
       </RouterLink>
+    </div>
+
+    <!-- 3. EL CUADRO DE BÚSQUEDA -->
+    <div style="margin-bottom: 1rem;">
+      <input 
+        type="text" 
+        v-model="busqueda" 
+        placeholder="Buscar por nombre..." 
+        class="input-simple"
+      />
     </div>
 
     <!-- Tabla de Productos -->
@@ -76,7 +89,8 @@ const eliminarProducto = (id, nombre) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="producto in store.productos" :key="producto.id">
+          <!-- CAMBIAMOS store.productos POR productosFiltrados -->
+          <tr v-for="producto in productosFiltrados" :key="producto.id">
             <td class="col-id">#{{ producto.id }}</td>
             
             <td class="col-prenda">
@@ -86,7 +100,7 @@ const eliminarProducto = (id, nombre) => {
                 </div>
                 <div>
                   <span class="nombre-prenda">{{ producto.nombre }}</span>
-                  <span class="descripcion-corta">{{ producto.descripcion.substring(0, 45) }}...</span>
+                  <span class="descripcion-corta">{{ producto.descripcion ? producto.descripcion.substring(0, 45) : '' }}...</span>
                 </div>
               </div>
             </td>
@@ -103,12 +117,8 @@ const eliminarProducto = (id, nombre) => {
             
             <td class="texto-derecha">
               <div class="acciones-grupo">
-                <button class="btn-accion editar" @click="abrirEdicion(producto)">
-                  ✏️ Editar
-                </button>
-                <button class="btn-accion eliminar" @click="eliminarProducto(producto.id, producto.nombre)">
-                  🗑️ Borrar
-                </button>
+                <button class="btn-accion editar" @click="abrirEdicion(producto)">✏️ Editar</button>
+                <button class="btn-accion eliminar" @click="eliminarProducto(producto.id, producto.nombre)">🗑️ Borrar</button>
               </div>
             </td>
           </tr>
@@ -137,7 +147,7 @@ const eliminarProducto = (id, nombre) => {
       </div>
     </div>
 
-    <!-- Cartelito flotante con estética de la tienda -->
+    <!-- Cartelito flotante -->
     <div v-if="mostrarNotificacion" :class="['toast-notificacion', tipoNotificacion]">
       <span v-if="tipoNotificacion === 'exito'" class="icono-toast">✓</span>
       <span v-else class="icono-toast">!</span>
@@ -148,6 +158,21 @@ const eliminarProducto = (id, nombre) => {
 </template>
 
 <style scoped>
+/* Estilo sencillo para el input nuevo */
+.input-simple {
+  width: 100%;
+  max-width: 300px;
+  padding: 0.6rem 1rem;
+  border: 1px solid #D2B9A1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+}
+.input-simple:focus {
+  border-color: #8C7355;
+}
+
+/* --- TUS ESTILOS ANTERIORES (sin cambios) --- */
 .contenedor-foto-tabla { width: 45px; height: 45px; border-radius: 6px; overflow: hidden; border: 1px solid #EAE5DF; background-color: #FAF9F6; }
 .foto-miniatura-tabla { width: 100%; height: 100%; object-fit: cover; }
 .header-pantalla-admin { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
@@ -155,6 +180,7 @@ const eliminarProducto = (id, nombre) => {
 .subtitulo { color: #777777; font-size: 0.95rem; margin: 0; }
 .btn-agregar-nuevo { background-color: #8C7355; color: #FFFFFF; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 4px; font-weight: bold; font-size: 0.9rem; transition: background-color 0.2s; }
 .btn-agregar-nuevo:hover { background-color: #735D43; }
+
 .contenedor-tabla { overflow-x: auto; padding: 0; background-color: #FFFFFF; border-radius: 12px; border: 1px solid #EAE5DF; box-shadow: 0 4px 10px rgba(0,0,0,0.01); }
 .tabla-admin { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
 .tabla-admin th { background-color: #F7F5F0; color: #555555; padding: 1rem 1.5rem; font-weight: bold; border-bottom: 2px solid #EAEAEA; }
@@ -216,7 +242,7 @@ const eliminarProducto = (id, nombre) => {
 .btn-cancelar { background: #EFECE8; color: #555555; border: none; padding: 0.65rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background-color 0.2s; }
 .btn-cancelar:hover { background: #E2DDD7; }
 
-/* ESTILOS DEL TOAST / CARTELITO OPTIMIZADOS CON LA PALETA DE LA TIENDA */
+/* ESTILOS DEL TOAST */
 .toast-notificacion {
   position: fixed;
   bottom: 2rem;
@@ -236,7 +262,6 @@ const eliminarProducto = (id, nombre) => {
   border: 1px solid #EAE5DF;
 }
 
-/* Éxito: usa los tonos marrones/arena cálidos de la tienda (#8C7355 / #C0955B) */
 .toast-notificacion.exito { 
   border-left: 5px solid #8C7355; 
 }
@@ -244,7 +269,6 @@ const eliminarProducto = (id, nombre) => {
   background-color: #8C7355; 
 }
 
-/* Error: se mantiene un rojo elegante pero que contrasta bien */
 .toast-notificacion.error { 
   border-left: 5px solid #C0392B; 
 }

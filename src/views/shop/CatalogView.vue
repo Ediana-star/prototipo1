@@ -28,6 +28,8 @@ const tallesDisponibles = ['Todos', 'S', 'M', 'L', 'XL', 'Único']
 
 // Sistema de Favoritos
 const favoritos = ref([])
+// Interruptor para saber si filtramos por favoritos
+const mostrarSoloFavoritos = ref(false) 
 
 const toggleFavorito = (id) => {
   if (favoritos.value.includes(id)) {
@@ -46,13 +48,15 @@ const productosFiltrados = computed(() => {
                               producto.categoria === categoriaSeleccionada.value
 
     const coincideGenero = generoSeleccionado.value === 'Todos' || 
-                            producto.genero === generoSeleccionado.value ||
-                            producto.genero === 'Unisex'
+                           producto.genero === generoSeleccionado.value ||
+                           producto.genero === 'Unisex'
 
     const coincideTalle = talleSeleccionado.value === 'Todos' || 
                           producto.talles.includes(talleSeleccionado.value)
 
-    return coincideBusqueda && coincideCategoria && coincideGenero && coincideTalle
+    const coincideFavorito = !mostrarSoloFavoritos.value || favoritos.value.includes(producto.id)
+
+    return coincideBusqueda && coincideCategoria && coincideGenero && coincideTalle && coincideFavorito
   })
 
   if (ordenPrecio.value === 'menor-mayor') {
@@ -79,13 +83,21 @@ const productosFiltrados = computed(() => {
           <input type="text" v-model="textoBusqueda" placeholder="¿Qué estás buscando hoy?...">
         </div>
 
-        <div class="ordenar-caja">
-          <label for="orden">Ordenar por:</label>
-          <select id="orden" v-model="ordenPrecio" class="select-orden">
-            <option value="recientes">Más recientes</option>
-            <option value="menor-mayor">Precio: Menor a Mayor</option>
-            <option value="mayor-menor">Precio: Mayor a Menor</option>
-          </select>
+        <div class="controles-secundarios">
+          <button 
+            :class="['btn-filtro btn-favoritos', { activo: mostrarSoloFavoritos }]"
+            @click="mostrarSoloFavoritos = !mostrarSoloFavoritos"
+          >
+            {{ mostrarSoloFavoritos ? '🖤 Favoritos' : '🤍 Ver Favoritos' }}
+          </button>
+
+          <div class="ordenar-caja">
+            <select id="orden" v-model="ordenPrecio" class="select-orden">
+              <option value="recientes">Más recientes</option>
+              <option value="menor-mayor">Menor precio</option>
+              <option value="mayor-menor">Mayor precio</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -116,7 +128,7 @@ const productosFiltrados = computed(() => {
       </div>
 
       <div class="bloque-filtro">
-        <span class="etiqueta-filtro">Filtrar por Talle:</span>
+        <span class="etiqueta-filtro">Talle:</span>
         <div class="grupo-botones">
           <button 
             v-for="talle in tallesDisponibles" :key="talle"
@@ -134,7 +146,7 @@ const productosFiltrados = computed(() => {
       <div class="tarjeta-producto" v-for="producto in productosFiltrados" :key="producto.id">
         
         <div class="contenedor-foto">
-          <button class="btn-favorito" @click.prevent="toggleFavorito(producto.id)">
+          <button class="btn-favorito-tarjeta" @click.prevent="toggleFavorito(producto.id)">
              {{ favoritos.includes(producto.id) ? '🖤' : '🤍' }}
           </button>
           
@@ -154,13 +166,14 @@ const productosFiltrados = computed(() => {
         </div>
 
         <RouterLink :to="`/producto/${producto.id}`" class="btn-ver">
-          Ver Detalles
+          Detalles
         </RouterLink>
       </div>
     </div>
 
     <div class="sin-resultados" v-else>
-      <h3>No hay prendas que coincidan con todos estos filtros combinados.</h3>
+      <h3 v-if="mostrarSoloFavoritos && favoritos.length === 0">Aún no has guardado ningún producto en favoritos.</h3>
+      <h3 v-else>No hay prendas que coincidan con todos estos filtros combinados.</h3>
       <p>Probá restableciendo algunos filtros para ver más opciones.</p>
     </div>
 
@@ -180,8 +193,10 @@ const productosFiltrados = computed(() => {
   color: #333333;
   margin-bottom: 2.5rem;
   font-size: 2rem;
+  font-family: 'Playfair Display', serif;
 }
 
+/* --- Panel de Filtros --- */
 .panel-filtros {
   background-color: #F7F5F0;
   padding: 1.5rem;
@@ -197,7 +212,7 @@ const productosFiltrados = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 2rem;
+  gap: 1.5rem;
   flex-wrap: wrap;
 }
 
@@ -213,6 +228,12 @@ const productosFiltrados = computed(() => {
   border: 1px solid #DDDDDD;
   border-radius: 4px;
   font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.buscador-caja input:focus {
+  border-color: #8C7355;
 }
 
 .lupa {
@@ -222,12 +243,16 @@ const productosFiltrados = computed(() => {
   transform: translateY(-50%);
 }
 
+.controles-secundarios {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .ordenar-caja {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: #555555;
-  font-size: 0.95rem;
 }
 
 .select-orden {
@@ -237,20 +262,20 @@ const productosFiltrados = computed(() => {
   background-color: #FFFFFF;
   color: #333333;
   cursor: pointer;
+  outline: none;
 }
 
 .bloque-filtro {
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
 }
 
 .etiqueta-filtro {
   font-weight: bold;
   color: #555555;
   font-size: 0.9rem;
-  min-width: 120px;
+  min-width: 90px;
 }
 
 .grupo-botones {
@@ -269,6 +294,14 @@ const productosFiltrados = computed(() => {
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-favoritos {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
 }
 
 .btn-filtro.talle {
@@ -288,6 +321,7 @@ const productosFiltrados = computed(() => {
   color: #FFFFFF;
 }
 
+/* --- Grilla de Productos --- */
 .grilla-productos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -310,14 +344,14 @@ const productosFiltrados = computed(() => {
 }
 
 .contenedor-foto {
-  height: 280px;
+  height: 320px;
   width: 100%;
   background-color: #F7F5F0;
   overflow: hidden; 
   position: relative; 
 }
 
-.btn-favorito {
+.btn-favorito-tarjeta {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -335,7 +369,7 @@ const productosFiltrados = computed(() => {
   transition: transform 0.2s;
 }
 
-.btn-favorito:hover {
+.btn-favorito-tarjeta:hover {
   transform: scale(1.1);
 }
 
@@ -357,26 +391,26 @@ const productosFiltrados = computed(() => {
 }
 
 .categoria {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #999999;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .nombre {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #333333;
   margin: 0.4rem 0;
 }
 
 .precio {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   color: #8C7355;
   font-weight: bold;
 }
 
 .talles-tarjeta {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #888888;
   margin-top: 0.5rem;
 }
@@ -388,12 +422,12 @@ const productosFiltrados = computed(() => {
   background-color: transparent;
   color: #8C7355;
   border: 1px solid #8C7355;
-  padding: 0.7rem;
-  margin: 0 1.2rem 1.2rem 1.2rem;
+  padding: 0.6rem;
+  margin: 0 1rem 1rem 1rem;
   border-radius: 4px;
   font-weight: bold;
   text-transform: uppercase;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   transition: all 0.3s;
 }
 
@@ -404,7 +438,149 @@ const productosFiltrados = computed(() => {
 
 .sin-resultados {
   text-align: center;
-  padding: 4rem 0;
+  padding: 4rem 1rem;
   color: #666666;
+}
+
+
+/* ========================================================
+   📱 ADAPTACIÓN RESPONSIVA PARA CELULARES Y TABLETS
+   ======================================================== */
+@media (max-width: 768px) {
+  .catalogo-container {
+    padding: 1rem;
+  }
+
+  .titulo-catalogo {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Filtros optimizados: Scroll horizontal y compactos */
+  .panel-filtros {
+    padding: 1rem;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .fila-controles-superior {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+
+  .buscador-caja {
+    min-width: 100%;
+  }
+
+  .controles-secundarios {
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .btn-favoritos {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+  }
+
+  .ordenar-caja {
+    flex: 1;
+  }
+  
+  .select-orden {
+    width: 100%;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+  }
+
+  .bloque-filtro {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .etiqueta-filtro {
+    font-size: 0.8rem;
+    min-width: auto;
+  }
+
+  /* Swipe horizontal para botones de filtros */
+  .grupo-botones {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Oculta scroll en Firefox */
+  }
+
+  .grupo-botones::-webkit-scrollbar {
+    display: none; /* Oculta scroll en Chrome/Safari */
+  }
+
+  .btn-filtro {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.8rem;
+  }
+
+  /* Grilla 2 columnas estilo App */
+  .grilla-productos {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+
+  .tarjeta-producto {
+    border-radius: 6px;
+  }
+
+  .contenedor-foto {
+    height: 220px; /* Reducido para que entren 2 prendas visibles */
+  }
+
+  .btn-favorito-tarjeta {
+    width: 30px;
+    height: 30px;
+    top: 6px;
+    right: 6px;
+    font-size: 0.8rem;
+  }
+
+  .info-producto {
+    padding: 0.8rem 0.5rem;
+  }
+
+  .nombre {
+    font-size: 0.85rem;
+    /* Evita que el nombre largo rompa la tarjeta pequeña */
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .precio {
+    font-size: 1rem;
+  }
+
+  .categoria, .talles-tarjeta {
+    font-size: 0.65rem;
+  }
+
+  .btn-ver {
+    padding: 0.5rem;
+    margin: 0 0.5rem 0.8rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 380px) {
+  /* Ajuste extremo para celulares muy pequeños */
+  .contenedor-foto {
+    height: 180px;
+  }
+  .controles-secundarios {
+    flex-direction: column;
+  }
 }
 </style>

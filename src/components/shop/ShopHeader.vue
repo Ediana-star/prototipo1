@@ -23,11 +23,13 @@ const store = useTiendaStore()
       <RouterLink to="/tabla-de-talles" active-class="activo">Tabla de talles</RouterLink>
     </nav>
 
-    <!-- Ícono del carrito -->
+    <!-- Ícono del carrito con Badge estilo App -->
     <div class="cart-icon">
-      <RouterLink to="/carrito">
-        🛒 Carrito 
-        <span class="contador">({{ store.totalArticulos }})</span>
+      <RouterLink to="/carrito" class="btn-carrito">
+        <span class="texto-carrito">🛒 Carrito</span>
+        <span v-if="store.totalArticulos > 0" class="contador-badge">
+          {{ store.totalArticulos }}
+        </span>
       </RouterLink>
     </div>
   </header>
@@ -38,9 +40,12 @@ const store = useTiendaStore()
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 5%;
-  background-color: #FFFFFF;
+  padding: 1.2rem 5%;
+  background-color: #ead3b7;
   border-bottom: 1px solid #EAEAEA;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .logo a {
@@ -48,6 +53,7 @@ const store = useTiendaStore()
   font-weight: bold;
   color: #8C7355;
   text-decoration: none;
+  font-family: 'Playfair Display', serif;
 }
 
 .menu {
@@ -61,14 +67,15 @@ const store = useTiendaStore()
   color: #555555;
   font-weight: 500;
   transition: color 0.3s;
-  padding-bottom: 3px; /* Espacio para el borde activo */
+  padding-bottom: 3px;
+  font-size: 0.95rem;
 }
 
 .menu a:hover {
   color: #8C7355;
 }
 
-/* 🌟 Estilo para la pestaña activa (como en la maqueta) */
+/* 🌟 Estilo para la pestaña activa */
 .menu a.activo {
   color: #8C7355;
   font-weight: 600;
@@ -77,24 +84,83 @@ const store = useTiendaStore()
 
 /* 🌟 Separadores de la barra de navegación */
 .separador {
-  color: #CCCCCC;
+  color: #c9b195;
   font-size: 0.9rem;
   user-select: none;
 }
 
-.cart-icon a {
+/* 🛒 Carrito y Contador Badge */
+.btn-carrito {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   text-decoration: none;
   color: #333333;
   font-weight: 500;
   transition: color 0.3s;
+  position: relative;
 }
 
-.cart-icon a:hover {
+.btn-carrito:hover {
   color: #8C7355;
 }
 
-.contador {
-  color: #8C7355;
+.contador-badge {
+  background-color: #c0392b;
+  color: #ffffff;
+  font-size: 0.75rem;
   font-weight: bold;
+  padding: 0.15rem 0.45rem;
+  border-radius: 10px;
+  line-height: 1;
+}
+
+/* ========================================================
+   📱 ADAPTACIÓN RESPONSIVA PARA CELULARES Y TABLETS
+   ======================================================== */
+@media (max-width: 768px) {
+  .shop-header {
+    flex-wrap: wrap;
+    padding: 0.8rem 1rem;
+    row-gap: 0.6rem;
+  }
+
+  .logo a {
+    font-size: 1.25rem;
+  }
+
+  .menu {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 1.2rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(140, 115, 85, 0.2);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Ocultar separadores en móvil para ganar espacio */
+  .separador {
+    display: none;
+  }
+
+  .menu a {
+    font-size: 0.85rem;
+  }
+
+  .texto-carrito {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu {
+    gap: 0.9rem;
+  }
+
+  .menu a {
+    font-size: 0.8rem;
+  }
 }
 </style>

@@ -134,6 +134,9 @@ const eliminarProducto = (item) => {
 </template>
 
 <style scoped>
+/* =========================================
+   ESTILOS ORIGINALES (Computadora)
+   ========================================= */
 .carrito-container {
   padding: 2rem 5%;
   min-height: 65vh;
@@ -381,7 +384,6 @@ const eliminarProducto = (item) => {
 .toast-notificacion.exito {
   border-left: 5px solid #C0955B; 
 }
-
 .toast-notificacion.exito .icono-toast {
   background-color: #C0955B;
 }
@@ -389,7 +391,6 @@ const eliminarProducto = (item) => {
 .toast-notificacion.error {
   border-left: 5px solid #C0392B; 
 }
-
 .toast-notificacion.error .icono-toast {
   background-color: #C0392B;
 }
@@ -408,5 +409,64 @@ const eliminarProducto = (item) => {
 @keyframes aparecer {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   NUEVO: ESTILOS RESPONSIVOS (Celulares)
+   ========================================= */
+@media (max-width: 768px) {
+  
+  /* 1. Apilamos la lista de productos y el resumen de compra */
+  .wrapper-carrito {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* 2. Hacemos que ocupen todo el ancho de la pantalla */
+  .lista-items, .resumen-compra {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 3. Reorganizamos cada producto individual */
+  .item-carrito {
+    flex-wrap: wrap; /* Permite que los elementos bajen de línea si no caben */
+    position: relative; /* Para poder ubicar la "X" libremente */
+    padding: 1rem;
+  }
+
+  /* 4. La imagen y los detalles se quedan arriba */
+  .item-detalles {
+    flex: 1 1 50%;
+    padding-right: 2rem; /* Deja espacio para que el texto no pise la "X" */
+  }
+
+  /* 5. Ubicamos la "X" (eliminar) arriba a la derecha */
+  .btn-eliminar {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  /* 6. Los botones de cantidad y el precio bajan a una nueva "fila" */
+  .item-cantidad {
+    margin-top: 1rem;
+  }
+
+  .item-subtotal {
+    margin-top: 1rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Empuja el precio hacia la derecha */
+  }
+
+  /* 7. Centramos el cartelito de notificación en celulares */
+  .toast-notificacion {
+    right: 1rem;
+    left: 1rem;
+    bottom: 1rem;
+    justify-content: center;
+  }
 }
 </style>

@@ -59,7 +59,7 @@ import { RouterLink } from 'vue-router'
 
 <style scoped>
 .shop-footer {
-  background-color: #FAF8F5; /* Tono beige suave igual al fondo de la maqueta */
+  background-color: #ead3b7; /* Tono beige suave igual al fondo de la maqueta */
   border-top: 1px solid #EAE5DF;
   padding: 3.5rem 6% 1.5rem 6%;
   margin-top: 4rem;
