@@ -6,7 +6,7 @@ import { ref, onMounted } from 'vue'
 const router = useRouter()
 
 const nombreAdmin = ref('Administrador')
-
+ 
 onMounted(() => {
   const correoGuardado = localStorage.getItem('adminEmail')
 

@@ -11,9 +11,9 @@ import 'swiper/css'
 import 'swiper/css/effect-fade'
 
 // --- Importación de imágenes del banner ---
-import img1 from '@/assets/images/lentesLampara.jpg'
-import img2 from '@/assets/images/vest.jpg'
-import img3 from '@/assets/images/carteraUnias.jpg'
+import img1 from '@/assets/images/principal.png'
+import img2 from '@/assets/images/vestido.png'
+import img3 from '@/assets/images/unias.png'
 
 const store = useTiendaStore()
 
