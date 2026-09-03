@@ -33,16 +33,7 @@ import { RouterLink } from 'vue-router'
         </ul>
       </div>
 
-      <!-- Columna 4: Información -->
-      <div class="col-footer">
-        <h4>Información</h4>
-        <ul class="lista-footer">
-          <li><a href="#">Preguntas frecuentes</a></li>
-          <li><a href="#">Políticas de cambios</a></li>
-          <li><a href="#">Términos y condiciones</a></li>
-        </ul>
-      </div>
-
+      
     </div>
 
     <!-- Parte inferior: Acceso Admin + Copyright -->

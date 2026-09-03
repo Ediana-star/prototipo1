@@ -58,7 +58,7 @@ const eliminarProducto = (item) => {
               :alt="item.nombre"
               class="foto-mini"
             />
-          </div>
+          </div>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 
           <div class="item-detalles">
             <span class="item-cat">{{ item.categoria }}</span>
