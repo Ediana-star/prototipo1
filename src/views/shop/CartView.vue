@@ -44,7 +44,7 @@ const eliminarProducto = (item) => {
     <div v-if="store.carrito.length === 0" class="carrito-vacio">
       <p>Tu carrito está vacío</p>
       <p class="subtexto">¿No sabés por dónde empezar? ¡Mirá nuestras prendas exclusivas!</p>
-      <RouterLink to="/catalogo" class="btn-ir-catalogo">Volver al Catálogo</RouterLink>
+      <RouterLink to="/catalogo" class="btn-ir-catalogo">Ir al Catálogo</RouterLink>
     </div>
 
     <div v-else class="wrapper-carrito">
