@@ -1,22 +1,19 @@
 <script setup>
-import { ref, computed } from 'vue' // Agregamos 'computed'
+import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useTiendaStore } from '../../stores/useTiendaStore'
 
 const store = useTiendaStore()
 const productoEditando = ref(null)
 
-// 1. VARIABLE PARA EL BUSCADOR
 const busqueda = ref('')
 
-// 2. FILTRO SÚPER SIMPLE (Solo por nombre)
 const productosFiltrados = computed(() => {
   return store.productos.filter(producto => 
     producto.nombre.toLowerCase().includes(busqueda.value.toLowerCase())
   )
 })
 
-// --- LÓGICA DEL CARTELITO ---
 const mostrarNotificacion = ref(false)
 const mensajeNotificacion = ref('')
 const tipoNotificacion = ref('exito')
@@ -27,7 +24,6 @@ const mostrarAviso = (mensaje, tipo = 'exito') => {
   mostrarNotificacion.value = true
   setTimeout(() => mostrarNotificacion.value = false, 3000)
 }
-// ----------------------------
 
 const abrirEdicion = (producto) => {
   productoEditando.value = { ...producto }
@@ -64,7 +60,6 @@ const eliminarProducto = (id, nombre) => {
       </RouterLink>
     </div>
 
-    <!-- 3. EL CUADRO DE BÚSQUEDA -->
     <div style="margin-bottom: 1rem;">
       <input 
         type="text" 
@@ -74,7 +69,7 @@ const eliminarProducto = (id, nombre) => {
       />
     </div>
 
-    <!-- Tabla de Productos -->
+    <!-- Tabla de Productos adaptada para Móviles -->
     <div class="contenedor-tabla card-admin">
       <table class="tabla-admin">
         <thead>
@@ -89,11 +84,12 @@ const eliminarProducto = (id, nombre) => {
           </tr>
         </thead>
         <tbody>
-          <!-- CAMBIAMOS store.productos POR productosFiltrados -->
           <tr v-for="producto in productosFiltrados" :key="producto.id">
-            <td class="col-id">#{{ producto.id }}</td>
+            <td class="col-id" data-label="ID">
+              <span>#{{ producto.id }}</span>
+            </td>
             
-            <td class="col-prenda">
+            <td class="col-prenda" data-label="Prenda">
               <div class="info-prenda-tabla">
                 <div class="contenedor-foto-tabla">
                   <img :src="producto.imagen || 'https://via.placeholder.com/50'" alt="Foto prenda" class="foto-miniatura-tabla" />
@@ -105,17 +101,20 @@ const eliminarProducto = (id, nombre) => {
               </div>
             </td>
             
-            <td><span class="tag-categoria-admin">{{ producto.categoria }}</span></td>
-            <td class="precio-admin">${{ producto.precio }}</td>
-            <td class="stock-unidades"><strong>{{ producto.stock ?? 0 }}</strong> u.</td>
+            <td data-label="Categoría"><span class="tag-categoria-admin">{{ producto.categoria }}</span></td>
+            <td class="precio-admin" data-label="Precio">${{ producto.precio }}</td>
+            
+            <td class="stock-unidades" data-label="Stock">
+              <span><strong>{{ producto.stock ?? 0 }}</strong> u.</span>
+            </td>
 
-            <td>
+            <td data-label="Talles">
               <div class="lista-talles-admin">
                 <span v-for="talle in producto.talles" :key="talle" class="badge-talle">{{ talle }}</span>
               </div>
             </td>
             
-            <td class="texto-derecha">
+            <td class="texto-derecha" data-label="Acciones">
               <div class="acciones-grupo">
                 <button class="btn-accion editar" @click="abrirEdicion(producto)">✏️ Editar</button>
                 <button class="btn-accion eliminar" @click="eliminarProducto(producto.id, producto.nombre)">🗑️ Borrar</button>
@@ -126,7 +125,7 @@ const eliminarProducto = (id, nombre) => {
       </table>
     </div>
 
-    <!-- VENTANA EMERGENTE (MODAL DE EDICIÓN) -->
+    <!-- MODAL EDICIÓN -->
     <div v-if="productoEditando" class="overlay-modal">
       <div class="contenido-modal">
         <h3>Editar Prenda #{{ productoEditando.id }}</h3>
@@ -141,13 +140,13 @@ const eliminarProducto = (id, nombre) => {
         <input v-model.number="productoEditando.stock" type="number" class="input-modal" />
 
         <div class="botones-modal">
-          <button @click="guardarCambios" class="btn-guardar">Guardar Cambios</button>
+          <button @click="guardarCambios" class="btn-guardar">Guardar</button>
           <button @click="productoEditando = null" class="btn-cancelar">Cancelar</button>
         </div>
       </div>
     </div>
 
-    <!-- Cartelito flotante -->
+    <!-- TOAST -->
     <div v-if="mostrarNotificacion" :class="['toast-notificacion', tipoNotificacion]">
       <span v-if="tipoNotificacion === 'exito'" class="icono-toast">✓</span>
       <span v-else class="icono-toast">!</span>
@@ -158,40 +157,28 @@ const eliminarProducto = (id, nombre) => {
 </template>
 
 <style scoped>
-/* Estilo sencillo para el input nuevo */
-.input-simple {
-  width: 100%;
-  max-width: 300px;
-  padding: 0.6rem 1rem;
-  border: 1px solid #D2B9A1;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  outline: none;
-}
-.input-simple:focus {
-  border-color: #8C7355;
-}
+.input-simple { width: 100%; max-width: 300px; padding: 0.6rem 1rem; border: 1px solid #D2B9A1; border-radius: 6px; font-size: 0.95rem; outline: none; }
+.input-simple:focus { border-color: #8C7355; }
 
-/* --- TUS ESTILOS ANTERIORES (sin cambios) --- */
-.contenedor-foto-tabla { width: 45px; height: 45px; border-radius: 6px; overflow: hidden; border: 1px solid #EAE5DF; background-color: #FAF9F6; }
+.contenedor-foto-tabla { width: 45px; height: 45px; border-radius: 6px; overflow: hidden; border: 1px solid #EAE5DF; background-color: #FAF9F6; flex-shrink: 0; }
 .foto-miniatura-tabla { width: 100%; height: 100%; object-fit: cover; }
 .header-pantalla-admin { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
 .header-pantalla-admin h1 { font-size: 1.8rem; color: #333333; margin: 0 0 0.3rem 0; }
 .subtitulo { color: #777777; font-size: 0.95rem; margin: 0; }
-.btn-agregar-nuevo { background-color: #8C7355; color: #FFFFFF; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 4px; font-weight: bold; font-size: 0.9rem; transition: background-color 0.2s; }
+.btn-agregar-nuevo { background-color: #8C7355; color: #FFFFFF; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 4px; font-weight: bold; font-size: 0.9rem; transition: background-color 0.2s; white-space: nowrap;}
 .btn-agregar-nuevo:hover { background-color: #735D43; }
 
-.contenedor-tabla { overflow-x: auto; padding: 0; background-color: #FFFFFF; border-radius: 12px; border: 1px solid #EAE5DF; box-shadow: 0 4px 10px rgba(0,0,0,0.01); }
+.contenedor-tabla { padding: 0; background-color: #FFFFFF; border-radius: 12px; border: 1px solid #EAE5DF; box-shadow: 0 4px 10px rgba(0,0,0,0.01); overflow: hidden; }
 .tabla-admin { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
 .tabla-admin th { background-color: #F7F5F0; color: #555555; padding: 1rem 1.5rem; font-weight: bold; border-bottom: 2px solid #EAEAEA; }
 .tabla-admin td { padding: 1.2rem 1.5rem; border-bottom: 1px solid #F0F0F0; color: #444444; vertical-align: middle; }
 .col-id { font-family: monospace; color: #888888; font-size: 0.9rem; }
 .info-prenda-tabla { display: flex; align-items: center; gap: 0.8rem; }
-.nombre-prenda { display: block; font-weight: 600; color: #333333; }
-.descripcion-corta { display: block; font-size: 0.8rem; color: #888888; margin-top: 0.1rem; }
+.nombre-prenda { display: block; font-weight: 600; color: #333333; line-height: 1.2;}
+.descripcion-corta { display: block; font-size: 0.8rem; color: #888888; margin-top: 0.2rem; }
 .tag-categoria-admin { background-color: #EFECE6; color: #555555; font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 4px; }
 .precio-admin { font-weight: bold; color: #8C7355; }
-.lista-talles-admin { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.lista-talles-admin { display: flex; gap: 0.3rem; flex-wrap: wrap; justify-content: flex-end; }
 .badge-talle { background-color: #FFFFFF; border: 1px solid #DDDDDD; color: #555555; font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 3px; }
 .texto-derecha { text-align: right; }
 .acciones-grupo { display: flex; gap: 0.5rem; justify-content: flex-end; }
@@ -201,96 +188,80 @@ const eliminarProducto = (id, nombre) => {
 .btn-accion.eliminar { background-color: #FFF0F0; color: #C62828; }
 .btn-accion.eliminar:hover { background-color: #FFE5E5; }
 
-/* ESTILOS DEL MODAL EMERGENTE */
-.overlay-modal {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex; justify-content: center; align-items: center;
-  z-index: 100;
-  backdrop-filter: blur(2px);
-}
-.contenido-modal {
-  background: #FFFFFF; padding: 2rem; border-radius: 12px; width: 380px;
-  display: flex; flex-direction: column; gap: 0.8rem;
-  border: 1px solid #EAE5DF;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-}
-.contenido-modal h3 {
-  color: #333333;
-  margin-top: 0;
-  font-size: 1.3rem;
-}
-.contenido-modal label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #4A3E3D;
-  margin-top: 0.3rem;
-}
-.input-modal {
-  padding: 0.65rem 0.9rem; border: 1px solid #D2B9A1; border-radius: 6px; width: 100%;
-  background-color: #FAF9F6; font-size: 0.95rem; color: #333; outline: none;
-  transition: all 0.2s;
-}
-.input-modal:focus {
-  border-color: #8C7355;
-  background-color: #FFFFFF;
-}
+/* MODAL */
+.overlay-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.4); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(2px); padding: 1rem;}
+.contenido-modal { background: #FFFFFF; padding: 2rem; border-radius: 12px; width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 0.8rem; border: 1px solid #EAE5DF; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+.contenido-modal h3 { color: #333333; margin-top: 0; font-size: 1.3rem; }
+.contenido-modal label { font-size: 0.85rem; font-weight: 600; color: #4A3E3D; margin-top: 0.3rem; }
+.input-modal { padding: 0.65rem 0.9rem; border: 1px solid #D2B9A1; border-radius: 6px; width: 100%; background-color: #FAF9F6; font-size: 0.95rem; color: #333; outline: none; transition: all 0.2s; }
+.input-modal:focus { border-color: #8C7355; background-color: #FFFFFF; }
 .botones-modal { display: flex; gap: 0.8rem; margin-top: 1.2rem; }
 .btn-guardar { background: #8C7355; color: white; border: none; padding: 0.65rem 1rem; border-radius: 6px; cursor: pointer; flex: 1; font-weight: bold; transition: background-color 0.2s; }
-.btn-guardar:hover { background: #735D43; }
 .btn-cancelar { background: #EFECE8; color: #555555; border: none; padding: 0.65rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background-color 0.2s; }
-.btn-cancelar:hover { background: #E2DDD7; }
 
-/* ESTILOS DEL TOAST */
-.toast-notificacion {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  z-index: 1000;
-  font-weight: 500;
-  font-size: 0.95rem;
-  animation: aparecer 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  background-color: #FDFCF7;
-  color: #333333;
-  border: 1px solid #EAE5DF;
-}
+/* TOAST */
+.toast-notificacion { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); display: flex; align-items: center; gap: 1rem; z-index: 1000; font-weight: 500; font-size: 0.95rem; animation: aparecer 0.3s cubic-bezier(0.16, 1, 0.3, 1); background-color: #FDFCF7; color: #333333; border: 1px solid #EAE5DF; }
+.toast-notificacion.exito { border-left: 5px solid #8C7355; }
+.toast-notificacion.exito .icono-toast { background-color: #8C7355; }
+.icono-toast { color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.85rem; flex-shrink: 0; }
+@keyframes aparecer { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-.toast-notificacion.exito { 
-  border-left: 5px solid #8C7355; 
-}
-.toast-notificacion.exito .icono-toast { 
-  background-color: #8C7355; 
-}
+/* =========================================
+   📱 RESPONSIVE (Tablets y Celulares)
+   ========================================= */
+@media (max-width: 768px) {
+  .header-pantalla-admin {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .input-simple { max-width: 100%; }
+  .btn-agregar-nuevo { text-align: center; }
 
-.toast-notificacion.error { 
-  border-left: 5px solid #C0392B; 
-}
-.toast-notificacion.error .icono-toast { 
-  background-color: #C0392B; 
-}
-
-.icono-toast {
-  color: white;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  font-size: 0.85rem;
-  flex-shrink: 0;
-}
-
-@keyframes aparecer {
-  from { opacity: 0; transform: translateY(20px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  /* Magia: Convertir la tabla en Tarjetas para el celular */
+  .tabla-admin thead { display: none; }
+  .tabla-admin tr {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 2px solid #EAE5DF;
+    padding: 1rem;
+    background-color: #FFF;
+  }
+  .tabla-admin td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #F9F7F5;
+    text-align: right;
+  }
+  .tabla-admin td:last-child { border-bottom: none; }
+  
+  /* El ::before toma el nombre que le dimos en data-label en el HTML */
+  .tabla-admin td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: #888;
+    margin-right: 1rem;
+    text-align: left;
+  }
+  
+  /* Corrección específica para que el ID no se separe a los extremos */
+  .col-id span {
+    display: inline-block;
+  }
+  
+  /* Arreglo especial para la celda de la foto y título en mobile */
+  .col-prenda .info-prenda-tabla { text-align: right; justify-content: flex-end; }
+  .col-prenda { flex-direction: column; align-items: flex-end; }
+  .col-prenda::before { margin-bottom: 0.5rem; width: 100%; }
+  
+  .acciones-grupo { width: 100%; justify-content: flex-end; }
+  
+  .toast-notificacion {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    justify-content: center;
+  }
 }
 </style>

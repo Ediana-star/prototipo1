@@ -69,7 +69,7 @@ const rechazarVenta = (pedido) => {
         <!-- Botones de Acción (solo visibles si está Pendiente) -->
         <div v-if="pedido.estado === 'Pendiente'" class="acciones-pedido">
           <button @click="confirmarVenta(pedido)" class="btn-aprobar">
-            ✓ Confirmar Entrega y Descontar Stock
+            ✓ Confirmar Entrega
           </button>
           <button @click="rechazarVenta(pedido)" class="btn-cancelar">
             ✕ Cancelar Pedido
@@ -81,180 +81,55 @@ const rechazarVenta = (pedido) => {
 </template>
 
 <style scoped>
-.admin-pedidos-container {
-  padding: 1rem 0;
-}
+.admin-pedidos-container { padding: 1rem 0; }
+.header-pantalla-admin h1 { font-size: 1.8rem; color: #333333; margin: 0 0 0.3rem 0; }
+.subtitulo { color: #777777; font-size: 0.95rem; margin-bottom: 2rem; }
+.sin-pedidos { background-color: #FFFFFF; padding: 3rem; text-align: center; border-radius: 8px; border: 1px solid #EAEAEA; color: #777777; }
+.lista-pedidos { display: flex; flex-direction: column; gap: 1.5rem; }
+.tarjeta-pedido { background-color: #FFFFFF; border: 1px solid #EAEAEA; border-radius: 8px; padding: 1.5rem; border-left: 5px solid #8C7355; }
+.tarjeta-pedido.entregado { border-left-color: #2E7D32; }
+.tarjeta-pedido.cancelado { border-left-color: #C0392B; opacity: 0.7; }
+.header-pedido { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F0F0F0; padding-bottom: 0.8rem; margin-bottom: 1rem; }
+.id-pedido { font-weight: bold; color: #333333; margin-right: 1rem; }
+.fecha-pedido { font-size: 0.85rem; color: #888888; }
+.badge-estado { padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+.badge-estado.pendiente { background-color: #FFF3CD; color: #856404; }
+.badge-estado.entregado { background-color: #D4EDDA; color: #155724; }
+.badge-estado.cancelado { background-color: #F8D7DA; color: #721C24; }
+.cuerpo-pedido { display: flex; gap: 2rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.info-cliente, .info-items { flex: 1; min-width: 250px; }
+.info-cliente h4, .info-items h4 { font-size: 0.95rem; color: #555555; margin-top: 0; margin-bottom: 0.6rem; }
+.info-cliente p { margin: 0.3rem 0; font-size: 0.9rem; color: #444444; }
+.info-items ul { list-style: none; padding: 0; margin: 0 0 0.8rem 0; }
+.info-items li { font-size: 0.9rem; color: #444444; padding: 0.2rem 0; }
+.total-pedido { font-weight: bold; font-size: 1.1rem; color: #333333; margin: 0; }
+.total-pedido span { color: #8C7355; }
+.acciones-pedido { display: flex; gap: 1rem; border-top: 1px solid #F0F0F0; padding-top: 1rem; }
+.btn-aprobar { background-color: #2E7D32; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: background 0.2s;}
+.btn-cancelar { background-color: #FFF0F0; color: #C0392B; border: 1px solid #C0392B; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: all 0.2s;}
+.btn-aprobar:hover { background-color: #1B5E20; }
+.btn-cancelar:hover { background-color: #C0392B; color: white; }
 
-.header-pantalla-admin h1 {
-  font-size: 1.8rem;
-  color: #333333;
-  margin: 0 0 0.3rem 0;
-}
-
-.subtitulo {
-  color: #777777;
-  font-size: 0.95rem;
-  margin-bottom: 2rem;
-}
-
-.sin-pedidos {
-  background-color: #FFFFFF;
-  padding: 3rem;
-  text-align: center;
-  border-radius: 8px;
-  border: 1px solid #EAEAEA;
-  color: #777777;
-}
-
-.lista-pedidos {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.tarjeta-pedido {
-  background-color: #FFFFFF;
-  border: 1px solid #EAEAEA;
-  border-radius: 8px;
-  padding: 1.5rem;
-  border-left: 5px solid #8C7355;
-}
-
-.tarjeta-pedido.entregado {
-  border-left-color: #2E7D32;
-}
-
-.tarjeta-pedido.cancelado {
-  border-left-color: #C0392B;
-  opacity: 0.7;
-}
-
-.header-pedido {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #F0F0F0;
-  padding-bottom: 0.8rem;
-  margin-bottom: 1rem;
-}
-
-.id-pedido {
-  font-weight: bold;
-  color: #333333;
-  margin-right: 1rem;
-}
-
-.fecha-pedido {
-  font-size: 0.85rem;
-  color: #888888;
-}
-
-.badge-estado {
-  padding: 0.3rem 0.8rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-.badge-estado.pendiente {
-  background-color: #FFF3CD;
-  color: #856404;
-}
-
-.badge-estado.entregado {
-  background-color: #D4EDDA;
-  color: #155724;
-}
-
-.badge-estado.cancelado {
-  background-color: #F8D7DA;
-  color: #721C24;
-}
-
-.cuerpo-pedido {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-.info-cliente, .info-items {
-  flex: 1;
-  min-width: 250px;
-}
-
-.info-cliente h4, .info-items h4 {
-  font-size: 0.95rem;
-  color: #555555;
-  margin-top: 0;
-  margin-bottom: 0.6rem;
-}
-
-.info-cliente p {
-  margin: 0.3rem 0;
-  font-size: 0.9rem;
-  color: #444444;
-}
-
-.info-items ul {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 0.8rem 0;
-}
-
-.info-items li {
-  font-size: 0.9rem;
-  color: #444444;
-  padding: 0.2rem 0;
-}
-
-.total-pedido {
-  font-weight: bold;
-  font-size: 1.1rem;
-  color: #333333;
-  margin: 0;
-}
-
-.total-pedido span {
-  color: #8C7355;
-}
-
-.acciones-pedido {
-  display: flex;
-  gap: 1rem;
-  border-top: 1px solid #F0F0F0;
-  padding-top: 1rem;
-}
-
-.btn-aprobar {
-  background-color: #2E7D32;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.85rem;
-}
-
-.btn-cancelar {
-  background-color: #FFF0F0;
-  color: #C0392B;
-  border: 1px solid #C0392B;
-  padding: 0.6rem 1.2rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.85rem;
-}
-
-.btn-aprobar:hover {
-  background-color: #1B5E20;
-}
-
-.btn-cancelar:hover {
-  background-color: #C0392B;
-  color: white;
+/* =========================================
+   📱 RESPONSIVE (Tablets y Celulares)
+   ========================================= */
+@media (max-width: 768px) {
+  .header-pedido {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  .cuerpo-pedido {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .acciones-pedido {
+    flex-direction: column;
+  }
+  .btn-aprobar, .btn-cancelar {
+    width: 100%;
+    text-align: center;
+    padding: 0.8rem;
+  }
 }
 </style>

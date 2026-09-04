@@ -26,7 +26,14 @@ const store = useTiendaStore()
     <!-- Ícono del carrito con Badge estilo App -->
     <div class="cart-icon">
       <RouterLink to="/carrito" class="btn-carrito">
-        <span class="texto-carrito">🛒 Carrito</span>
+        <!-- Ícono SVG de Carrito -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span class="texto-carrito">Carrito</span>
+        
         <span v-if="store.totalArticulos > 0" class="contador-badge">
           {{ store.totalArticulos }}
         </span>
@@ -42,14 +49,14 @@ const store = useTiendaStore()
   align-items: center;
   padding: 1.2rem 5%;
   background-color: #ead3b7;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid #D6C2AA; /* Unificado con el borde del footer */
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
 .logo a {
-  font-size: 1.5rem;
+  font-size: 1.6rem; /* Aumentado para coincidir con el footer */
   font-weight: bold;
   color: #8C7355;
   text-decoration: none;
@@ -64,11 +71,11 @@ const store = useTiendaStore()
 
 .menu a {
   text-decoration: none;
-  color: #555555;
+  color: #554A46; /* Tonalidad igual al texto del footer */
   font-weight: 500;
   transition: color 0.3s;
   padding-bottom: 3px;
-  font-size: 0.95rem;
+  font-size: 1rem; /* Aumentado a 1rem */
 }
 
 .menu a:hover {
@@ -85,7 +92,7 @@ const store = useTiendaStore()
 /* 🌟 Separadores de la barra de navegación */
 .separador {
   color: #c9b195;
-  font-size: 0.9rem;
+  font-size: 1rem;
   user-select: none;
 }
 
@@ -95,14 +102,19 @@ const store = useTiendaStore()
   align-items: center;
   gap: 0.4rem;
   text-decoration: none;
-  color: #333333;
+  color: #554A46; /* Unificado con el menú */
   font-weight: 500;
+  font-size: 1rem; /* Aumentado */
   transition: color 0.3s;
   position: relative;
 }
 
 .btn-carrito:hover {
   color: #8C7355;
+}
+
+.texto-carrito {
+  font-size: 1rem;
 }
 
 .contador-badge {
@@ -126,7 +138,7 @@ const store = useTiendaStore()
   }
 
   .logo a {
-    font-size: 1.25rem;
+    font-size: 1.4rem; /* Un poco más grande en móviles también */
   }
 
   .menu {
@@ -146,11 +158,11 @@ const store = useTiendaStore()
   }
 
   .menu a {
-    font-size: 0.85rem;
+    font-size: 0.95rem; /* Mejor lectura en móvil */
   }
 
   .texto-carrito {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
 }
 
@@ -160,7 +172,7 @@ const store = useTiendaStore()
   }
 
   .menu a {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
   }
 }
 </style>
