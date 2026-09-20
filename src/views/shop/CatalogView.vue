@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue' 
+import { ref, computed, watch, onMounted } from 'vue' 
 import { useRoute, RouterLink } from 'vue-router'
 import ShopHeader from '../../components/shop/ShopHeader.vue'
 import ShopFooter from '../../components/shop/ShopFooter.vue'
@@ -7,6 +7,11 @@ import { useTiendaStore } from '../../stores/useTiendaStore'
 
 const store = useTiendaStore()
 const route = useRoute()
+
+// Pedimos los datos al cargar la pantalla
+onMounted(() => {
+  store.cargarProductos()
+})
 
 const textoBusqueda = ref('')
 const talleSeleccionado = ref('Todos')
@@ -28,7 +33,6 @@ const tallesDisponibles = ['Todos', 'S', 'M', 'L', 'XL', 'Único']
 
 // Sistema de Favoritos
 const favoritos = ref([])
-// Interruptor para saber si filtramos por favoritos
 const mostrarSoloFavoritos = ref(false) 
 
 const toggleFavorito = (id) => {
@@ -39,10 +43,15 @@ const toggleFavorito = (id) => {
   }
 }
 
+// AQUÍ ESTABA EL ERROR: Agregamos protecciones contra datos nulos
 const productosFiltrados = computed(() => {
   let resultado = store.productos.filter(producto => {
-    const coincideBusqueda = producto.nombre.toLowerCase().includes(textoBusqueda.value.toLowerCase()) ||
-                             producto.descripcion.toLowerCase().includes(textoBusqueda.value.toLowerCase())
+    // 1. Protegemos los textos (si vienen null, usamos '')
+    const nombreSeguro = producto.nombre || ''
+    const descSegura = producto.descripcion || ''
+    
+    const coincideBusqueda = nombreSeguro.toLowerCase().includes(textoBusqueda.value.toLowerCase()) ||
+                             descSegura.toLowerCase().includes(textoBusqueda.value.toLowerCase())
     
     const coincideCategoria = categoriaSeleccionada.value === 'Todos' || 
                               producto.categoria === categoriaSeleccionada.value
@@ -51,18 +60,21 @@ const productosFiltrados = computed(() => {
                            producto.genero === generoSeleccionado.value ||
                            producto.genero === 'Unisex'
 
+    // 2. Protegemos los talles (si vienen null, usamos [])
+    const tallesSeguros = producto.talles || []
     const coincideTalle = talleSeleccionado.value === 'Todos' || 
-                          producto.talles.includes(talleSeleccionado.value)
+                          tallesSeguros.includes(talleSeleccionado.value)
 
     const coincideFavorito = !mostrarSoloFavoritos.value || favoritos.value.includes(producto.id)
 
     return coincideBusqueda && coincideCategoria && coincideGenero && coincideTalle && coincideFavorito
   })
 
+  // 3. Protegemos los precios al ordenar
   if (ordenPrecio.value === 'menor-mayor') {
-    resultado.sort((a, b) => a.precio - b.precio)
+    resultado.sort((a, b) => (a.precio || 0) - (b.precio || 0))
   } else if (ordenPrecio.value === 'mayor-menor') {
-    resultado.sort((a, b) => b.precio - a.precio)
+    resultado.sort((a, b) => (b.precio || 0) - (a.precio || 0))
   }
 
   return resultado
@@ -142,7 +154,13 @@ const productosFiltrados = computed(() => {
 
     </div>
 
-    <div class="grilla-productos" v-if="productosFiltrados.length > 0">
+    <!-- Mensaje de carga mientras conecta con Laravel -->
+    <div v-if="store.cargando" class="estado-cargando">
+      <h3>Preparando la colección...</h3>
+    </div>
+
+    <!-- Si ya cargó, mostramos la grilla normal -->
+    <div class="grilla-productos" v-else-if="productosFiltrados.length > 0">
       <div class="tarjeta-producto" v-for="producto in productosFiltrados" :key="producto.id">
         
         <div class="contenedor-foto">
@@ -162,7 +180,8 @@ const productosFiltrados = computed(() => {
           <span class="categoria">{{ producto.genero }} | {{ producto.categoria }}</span>
           <h3 class="nombre">{{ producto.nombre }}</h3>
           <p class="precio">${{ producto.precio }}</p>
-          <p class="talles-tarjeta">Talles: {{ producto.talles.join(', ') }}</p>
+          <!-- OTRO CAMBIO ACÁ: Protegemos el join de los talles -->
+          <p class="talles-tarjeta">Talles: {{ (producto.talles || []).join(', ') }}</p>
         </div>
 
         <RouterLink :to="`/producto/${producto.id}`" class="btn-ver">
@@ -183,6 +202,13 @@ const productosFiltrados = computed(() => {
 </template>
 
 <style scoped>
+.estado-cargando {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: #8C7355;
+  font-family: 'Playfair Display', serif;
+}
+
 .catalogo-container {
   padding: 2rem 5%;
   min-height: 60vh;
@@ -196,7 +222,6 @@ const productosFiltrados = computed(() => {
   font-family: 'Playfair Display', serif;
 }
 
-/* --- Panel de Filtros --- */
 .panel-filtros {
   background-color: #F7F5F0;
   padding: 1.5rem;
@@ -321,7 +346,6 @@ const productosFiltrados = computed(() => {
   color: #FFFFFF;
 }
 
-/* --- Grilla de Productos --- */
 .grilla-productos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -442,103 +466,79 @@ const productosFiltrados = computed(() => {
   color: #666666;
 }
 
-
-/* ========================================================
-   📱 ADAPTACIÓN RESPONSIVA PARA CELULARES Y TABLETS
-   ======================================================== */
 @media (max-width: 768px) {
   .catalogo-container {
     padding: 1rem;
   }
-
   .titulo-catalogo {
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
   }
-
-  /* Filtros optimizados: Scroll horizontal y compactos */
   .panel-filtros {
     padding: 1rem;
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
-
   .fila-controles-superior {
     flex-direction: column;
     align-items: stretch;
     gap: 0.8rem;
   }
-
   .buscador-caja {
     min-width: 100%;
   }
-
   .controles-secundarios {
     justify-content: space-between;
     gap: 0.5rem;
   }
-
   .btn-favoritos {
     flex: 1;
     justify-content: center;
     font-size: 0.8rem;
     padding: 0.5rem;
   }
-
   .ordenar-caja {
     flex: 1;
   }
-  
   .select-orden {
     width: 100%;
     font-size: 0.8rem;
     padding: 0.5rem;
   }
-
   .bloque-filtro {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.4rem;
   }
-
   .etiqueta-filtro {
     font-size: 0.8rem;
     min-width: auto;
   }
-
-  /* Swipe horizontal para botones de filtros */
   .grupo-botones {
     flex-wrap: nowrap;
     overflow-x: auto;
     width: 100%;
     padding-bottom: 0.5rem;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Oculta scroll en Firefox */
+    scrollbar-width: none; 
   }
-
   .grupo-botones::-webkit-scrollbar {
-    display: none; /* Oculta scroll en Chrome/Safari */
+    display: none; 
   }
-
   .btn-filtro {
     font-size: 0.75rem;
     padding: 0.35rem 0.8rem;
   }
-
-  /* Grilla 2 columnas estilo App */
   .grilla-productos {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.6rem;
   }
-
   .tarjeta-producto {
     border-radius: 6px;
   }
-
   .contenedor-foto {
-    height: 220px; /* Reducido para que entren 2 prendas visibles */
+    height: 220px;
   }
-
   .btn-favorito-tarjeta {
     width: 30px;
     height: 30px;
@@ -546,27 +546,21 @@ const productosFiltrados = computed(() => {
     right: 6px;
     font-size: 0.8rem;
   }
-
   .info-producto {
     padding: 0.8rem 0.5rem;
   }
-
   .nombre {
     font-size: 0.85rem;
-    /* Evita que el nombre largo rompa la tarjeta pequeña */
     white-space: nowrap; 
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .precio {
     font-size: 1rem;
   }
-
   .categoria, .talles-tarjeta {
     font-size: 0.65rem;
   }
-
   .btn-ver {
     padding: 0.5rem;
     margin: 0 0.5rem 0.8rem 0.5rem;
@@ -575,7 +569,6 @@ const productosFiltrados = computed(() => {
 }
 
 @media (max-width: 380px) {
-  /* Ajuste extremo para celulares muy pequeños */
   .contenedor-foto {
     height: 180px;
   }

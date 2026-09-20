@@ -3,8 +3,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTiendaStore } from '../../stores/useTiendaStore'
 
-const store = useTiendaStore()
 const router = useRouter()
+const store = useTiendaStore() // IMPORTANTE: Agregamos el store para actualizar el catálogo después
 
 const nuevoProducto = ref({
   nombre: '',
@@ -14,10 +14,10 @@ const nuevoProducto = ref({
   stock: null,
   descripcion: '',
   talles: [],
-  imagen: '' 
 })
 
 const imagenPreview = ref(null)
+const archivoImagen = ref(null) 
 
 const mostrarNotificacion = ref(false)
 const mensajeNotificacion = ref('')
@@ -27,7 +27,7 @@ const mostrarAviso = (mensaje, tipo) => {
   mensajeNotificacion.value = mensaje
   tipoNotificacion.value = tipo
   mostrarNotificacion.value = true
-  setTimeout(() => mostrarNotificacion.value = false, 3000)
+  setTimeout(() => mostrarNotificacion.value = false, 4000) // Le di un segundito más para leer bien
 }
 
 const categorias = ['Remeras y Camisas', 'Camperas', 'Pantalones', 'Vestidos y Enteritos', 'Ropa Interior', 'Accesorios']
@@ -37,33 +37,70 @@ const tallesDisponibles = ['S', 'M', 'L', 'XL', 'Único']
 const alSeleccionarImagen = (evento) => {
   const archivo = evento.target.files[0]
   if (archivo) {
+    archivoImagen.value = archivo 
     const urlTemporal = URL.createObjectURL(archivo)
-    nuevoProducto.value.imagen = urlTemporal
-    imagenPreview.value = urlTemporal
+    imagenPreview.value = urlTemporal 
   }
 }
 
-const guardarProducto = () => {
+const guardarProducto = async () => {
+  // 1. Validaciones básicas en el frontend
   if (!nuevoProducto.value.nombre || !nuevoProducto.value.precio || !nuevoProducto.value.categoria || !nuevoProducto.value.genero || nuevoProducto.value.stock === null) {
-    mostrarAviso('Por favor, completa todos los campos obligatorios (*).', 'error')
+    mostrarAviso('Por favor, completá todos los campos obligatorios (*).', 'error')
     return
   }
 
-  const productoAsegurado = {
-    nombre: nuevoProducto.value.nombre,
-    precio: Number(nuevoProducto.value.precio),
-    categoria: nuevoProducto.value.categoria,
-    genero: nuevoProducto.value.genero,
-    stock: Number(nuevoProducto.value.stock),
-    descripcion: nuevoProducto.value.descripcion || 'Sin descripción.',
-    talles: [...nuevoProducto.value.talles],
-    imagen: nuevoProducto.value.imagen || 'https://via.placeholder.com/300?text=Sin+Foto'
+  const formData = new FormData()
+  
+  formData.append('name', nuevoProducto.value.nombre)
+  formData.append('price', Number(nuevoProducto.value.precio))
+  formData.append('category', nuevoProducto.value.categoria)
+  formData.append('gender', nuevoProducto.value.genero)
+  formData.append('stock', Number(nuevoProducto.value.stock))
+  formData.append('description', nuevoProducto.value.descripcion || 'Sin descripción.')
+
+  nuevoProducto.value.talles.forEach((talle, index) => {
+    formData.append(`sizes[${index}]`, talle)
+  })
+
+  if (archivoImagen.value) {
+    formData.append('image', archivoImagen.value)
   }
 
-  store.agregarProducto(productoAsegurado)
-  mostrarAviso(`¡"${nuevoProducto.value.nombre}" publicado con éxito!`, 'exito')
-  
-  setTimeout(() => router.push('/admin/catalogo'), 2000)
+  try {
+    // Le avisamos al usuario que estamos trabajando
+    mostrarAviso('Enviando datos al servidor...', 'exito')
+
+    const respuesta = await fetch('http://localhost:8000/api/products', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json' // ESTA LÍNEA ES MAGIA PURA PARA LARAVEL
+      },
+      body: formData
+    })
+
+    // Si Laravel responde con errores de validación (código 422)
+    if (respuesta.status === 422) {
+      const errores = await respuesta.json()
+      console.log("Errores de validación de Laravel:", errores)
+      mostrarAviso('Laravel rechazó los datos. Revisá la consola (F12) para ver por qué.', 'error')
+      return
+    }
+
+    if (respuesta.ok) {
+      mostrarAviso(`¡"${nuevoProducto.value.nombre}" publicado con éxito!`, 'exito')
+      
+      // Le pedimos a Pinia que vuelva a buscar la lista de productos actualizada
+      await store.cargarProductos()
+      
+      setTimeout(() => router.push('/admin/catalogo'), 2000)
+    } else {
+      mostrarAviso(`Error en el servidor: código ${respuesta.status}`, 'error')
+    }
+  } catch (error) {
+    console.error("Error de conexión (CORS o Servidor apagado):", error)
+    mostrarAviso('No se pudo conectar. ¿El servidor de Laravel está prendido?', 'error')
+  }
 }
 </script>
 
@@ -199,9 +236,6 @@ const guardarProducto = () => {
 .icono-toast { color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; justify-content: center; align-items: center; font-weight: bold; }
 @keyframes aparecer { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-/* =========================================
-   📱 RESPONSIVE (Tablets y Celulares)
-   ========================================= */
 @media (max-width: 768px) {
   .card-formulario {
     padding: 1.2rem;
@@ -212,10 +246,10 @@ const guardarProducto = () => {
     gap: 1rem;
   }
   .fila-datos {
-    grid-template-columns: 1fr; /* Columna única en móvil */
+    grid-template-columns: 1fr;
   }
   .bloque-botones {
-    flex-direction: column-reverse; /* El botón de cancelar queda abajo */
+    flex-direction: column-reverse; 
     gap: 0.5rem;
   }
   .btn-cancelar, .btn-guardar {

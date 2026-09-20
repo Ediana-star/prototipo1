@@ -32,7 +32,7 @@ const mostrarAviso = (mensaje, tipo = 'error') => {
   }, 3000)
 }
 
-const confirmarPedido = () => {
+const confirmarPedido = async () => {
   // 1. Saneamiento: Eliminar espacios al inicio/final y colapsar múltiples espacios internos a uno solo
   const nombreLimpio = nombre.value.trim().replace(/\s+/g, ' ')
   // Remover espacios, guiones y paréntesis del teléfono para validar sólo los dígitos numéricos
@@ -45,21 +45,21 @@ const confirmarPedido = () => {
     return
   }
 
-  // 3. Validación de Nombre (sólo letras, acentos y espacios. Mínimo 3 caracteres)
+  // 3. Validación de Nombre
   const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,60}$/
   if (!regexNombre.test(nombreLimpio)) {
     mostrarAviso('Ingresá un nombre válido (sólo letras, mínimo 3 caracteres).', 'error')
     return
   }
 
-  // 4. Validación de Teléfono (sólo números, opcional código +, entre 8 y 15 dígitos)
+  // 4. Validación de Teléfono 
   const regexTelefono = /^\+?[0-9]{8,15}$/
   if (!regexTelefono.test(telefonoLimpio)) {
     mostrarAviso('Ingresá un número de teléfono válido (sólo números, entre 8 y 15 dígitos).', 'error')
     return
   }
 
-  // 5. Validación de Dirección (mínimo 5 caracteres para evitar direcciones inventadas tipo "a")
+  // 5. Validación de Dirección 
   if (direccionLimpia.length < 5) {
     mostrarAviso('Ingresá una dirección de envío más específica (mínimo 5 caracteres).', 'error')
     return
@@ -82,20 +82,50 @@ const confirmarPedido = () => {
                   `*Dirección:* ${direccion.value}\n` +
                   `*Teléfono:* ${telefono.value}`
 
-  // 1. Guardamos el pedido en el Admin como "Pendiente"
-  store.crearPedido(
-    { nombre: nombre.value, telefono: telefono.value, direccion: direccion.value },
-    store.carrito,
-    totalPagar.value
-  )
+  // --- NUEVA LÓGICA CON LARAVEL ---
+  
+  // A. Armamos el paquete de datos tal cual lo espera Laravel
+  const payload = {
+    customer_name: nombre.value,
+    customer_phone: telefono.value,
+    customer_address: direccion.value,
+    total: totalPagar.value,
+    items: store.carrito.map(item => ({
+      id: item.id,
+      talle: item.talle,
+      cantidad: item.cantidad,
+      precio: item.precio
+    }))
+  }
 
-  // 2. Vaciamos el carrito
-  store.carrito = []
+  try {
+    mostrarAviso('Anotando tu pedido...', 'exito') // Un mensajito visual mientras carga
 
-  // 3. Redirigimos a WhatsApp e Inicio
-  const mensajeCodificado = encodeURIComponent(mensaje)
-  window.open(`https://wa.me/${numeroWhatsApp}?text=${mensajeCodificado}`, '_blank')
-  router.push('/')
+    // B. Mandamos la caja al backend
+    const respuesta = await fetch('http://localhost:8000/api/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+
+    if (respuesta.ok) {
+      // C. Si todo salió bien, vaciamos el carrito local
+      store.carrito = []
+
+      // D. Redirigimos a WhatsApp e Inicio
+      const mensajeCodificado = encodeURIComponent(mensaje)
+      window.open(`https://wa.me/${numeroWhatsApp}?text=${mensajeCodificado}`, '_blank')
+      router.push('/')
+    } else {
+      mostrarAviso('Hubo un error al procesar el pedido. Intentá de nuevo.', 'error')
+    }
+  } catch (error) {
+    console.error("Error al enviar el pedido:", error)
+    mostrarAviso('No se pudo conectar con el servidor. ¿El backend está prendido?', 'error')
+  }
 }
 </script>
 

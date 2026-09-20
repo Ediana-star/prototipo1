@@ -1,11 +1,15 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useTiendaStore } from '../../stores/useTiendaStore'
 
 const store = useTiendaStore()
-const productoEditando = ref(null)
 
+onMounted(() => {
+  store.cargarProductos()
+})
+
+const productoEditando = ref(null)
 const busqueda = ref('')
 
 const productosFiltrados = computed(() => {
@@ -29,20 +33,64 @@ const abrirEdicion = (producto) => {
   productoEditando.value = { ...producto }
 }
 
-const guardarCambios = () => {
-  const index = store.productos.findIndex(p => p.id === productoEditando.value.id)
-  if (index !== -1) {
-    store.productos[index] = { ...productoEditando.value }
+// -------------------------------------------------------------
+// NUEVA VERSIÓN: GUARDAR CAMBIOS REALES EN LA BASE DE DATOS
+// -------------------------------------------------------------
+const guardarCambios = async () => {
+  try {
+    mostrarAviso('Guardando...', 'exito')
+    
+    // Le mandamos a Laravel (PUT) los datos modificados
+    const respuesta = await fetch(`http://localhost:8000/api/products/${productoEditando.value.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        name: productoEditando.value.nombre,
+        price: productoEditando.value.precio,
+        stock: productoEditando.value.stock
+      })
+    })
+
+    if (respuesta.ok) {
+      await store.cargarProductos() // Recargamos para ver los cambios
+      productoEditando.value = null 
+      mostrarAviso('¡Los cambios se guardaron correctamente!', 'exito')
+    } else {
+      mostrarAviso('Hubo un error al intentar editar.', 'error')
+    }
+  } catch (error) {
+    mostrarAviso('No se pudo conectar con el servidor.', 'error')
   }
-  productoEditando.value = null 
-  mostrarAviso('¡Los cambios se guardaron correctamente!', 'exito')
 }
 
-const eliminarProducto = (id, nombre) => {
-  const confirmar = confirm(`¿Estás seguro de que querés eliminar "${nombre}"?`)
+// -------------------------------------------------------------
+// NUEVA VERSIÓN: BORRAR DE VERDAD EN LA BASE DE DATOS
+// -------------------------------------------------------------
+const eliminarProducto = async (id, nombre) => {
+  const confirmar = confirm(`¿Estás seguro de que querés eliminar "${nombre}"? Esta acción no se puede deshacer.`)
+  
   if (confirmar) {
-    store.productos = store.productos.filter(p => p.id !== id)
-    mostrarAviso(`El producto "${nombre}" fue eliminado.`, 'exito')
+    try {
+      // Le avisamos a Laravel (DELETE) que borre este ID
+      const respuesta = await fetch(`http://localhost:8000/api/products/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+
+      if (respuesta.ok) {
+        await store.cargarProductos() // Recargamos para que desaparezca de la tabla
+        mostrarAviso(`El producto "${nombre}" fue eliminado.`, 'exito')
+      } else {
+        mostrarAviso('Hubo un error al intentar borrar.', 'error')
+      }
+    } catch (error) {
+      mostrarAviso('No se pudo conectar con el servidor.', 'error')
+    }
   }
 }
 </script>
@@ -69,8 +117,11 @@ const eliminarProducto = (id, nombre) => {
       />
     </div>
 
-    <!-- Tabla de Productos adaptada para Móviles -->
-    <div class="contenedor-tabla card-admin">
+    <div v-if="store.cargando" style="text-align: center; padding: 2rem; color: #888;">
+      Cargando inventario...
+    </div>
+
+    <div v-else class="contenedor-tabla card-admin">
       <table class="tabla-admin">
         <thead>
           <tr>
@@ -203,12 +254,11 @@ const eliminarProducto = (id, nombre) => {
 .toast-notificacion { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); display: flex; align-items: center; gap: 1rem; z-index: 1000; font-weight: 500; font-size: 0.95rem; animation: aparecer 0.3s cubic-bezier(0.16, 1, 0.3, 1); background-color: #FDFCF7; color: #333333; border: 1px solid #EAE5DF; }
 .toast-notificacion.exito { border-left: 5px solid #8C7355; }
 .toast-notificacion.exito .icono-toast { background-color: #8C7355; }
+.toast-notificacion.error { border-left: 5px solid #C0392B; }
+.toast-notificacion.error .icono-toast { background-color: #C0392B; }
 .icono-toast { color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.85rem; flex-shrink: 0; }
 @keyframes aparecer { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-/* =========================================
-   📱 RESPONSIVE (Tablets y Celulares)
-   ========================================= */
 @media (max-width: 768px) {
   .header-pantalla-admin {
     flex-direction: column;
@@ -217,7 +267,6 @@ const eliminarProducto = (id, nombre) => {
   .input-simple { max-width: 100%; }
   .btn-agregar-nuevo { text-align: center; }
 
-  /* Magia: Convertir la tabla en Tarjetas para el celular */
   .tabla-admin thead { display: none; }
   .tabla-admin tr {
     display: flex;
@@ -236,7 +285,6 @@ const eliminarProducto = (id, nombre) => {
   }
   .tabla-admin td:last-child { border-bottom: none; }
   
-  /* El ::before toma el nombre que le dimos en data-label en el HTML */
   .tabla-admin td::before {
     content: attr(data-label);
     font-weight: bold;
@@ -245,12 +293,8 @@ const eliminarProducto = (id, nombre) => {
     text-align: left;
   }
   
-  /* Corrección específica para que el ID no se separe a los extremos */
-  .col-id span {
-    display: inline-block;
-  }
+  .col-id span { display: inline-block; }
   
-  /* Arreglo especial para la celda de la foto y título en mobile */
   .col-prenda .info-prenda-tabla { text-align: right; justify-content: flex-end; }
   .col-prenda { flex-direction: column; align-items: flex-end; }
   .col-prenda::before { margin-bottom: 0.5rem; width: 100%; }

@@ -4,23 +4,9 @@ import { ref, computed } from 'vue'
 export const useTiendaStore = defineStore('tienda', () => {
   
   // 1. ESTADO
-  const productos = ref([
-    { id: 1, nombre: 'Camisa Blanca Hombre', categoria: 'Remeras y Camisas', genero: 'Hombre', precio: 1290, stock: 20, descripcion: 'Camisa de vestir blanca, corte entallado.', talles: ['S', 'M', 'L', 'XL'], imagen: '/imagenes/camisa-hombre.jpeg' },
-    { id: 2, nombre: 'Remera Algodón Hombre', categoria: 'Remeras y Camisas', genero: 'Hombre', precio: 590, stock: 45, descripcion: 'Remera lisa de algodón, muy cómoda.', talles: ['S', 'M', 'L'], imagen: '/imagenes/camiseta-hombre.jpg' },
-    { id: 3, nombre: 'Remera Básica Mujer', categoria: 'Remeras y Camisas', genero: 'Mujer', precio: 590, stock: 35, descripcion: 'Remera básica de mujer ideal para uso diario.', talles: ['S', 'M', 'L'], imagen: '/imagenes/camiseta-mujer.jpg' },
-    { id: 4, nombre: 'Campera Invierno Hombre', categoria: 'Camperas', genero: 'Hombre', precio: 2890, stock: 15, descripcion: 'Campera acolchada de abrigo para hombre.', talles: ['M', 'L', 'XL'], imagen: '/imagenes/campera-hombre (2).jpeg' },
-    { id: 5, nombre: 'Campera de Cuero Mujer', categoria: 'Camperas', genero: 'Mujer', precio: 2490, stock: 10, descripcion: 'Campera estilo biker de cuero sintético.', talles: ['S', 'M'], imagen: '/imagenes/campera-mujer.jpeg' },
-    { id: 6, nombre: 'Enterito Elegante', categoria: 'Vestidos y Enteritos', genero: 'Mujer', precio: 1890, stock: 12, descripcion: 'Enterito largo sin mangas, ideal para la noche.', talles: ['S', 'M', 'L'], imagen: '/imagenes/enterito.jpeg' },
-    { id: 7, nombre: 'Jean Clásico Mujer', categoria: 'Pantalones', genero: 'Mujer', precio: 1490, stock: 25, descripcion: 'Jean ajustado de tiro alto para mujer.', talles: ['S', 'M', 'L'], imagen: '/imagenes/jean-mujer.jpeg' },
-    { id: 8, nombre: 'Jean Suelto Mujer', categoria: 'Pantalones', genero: 'Mujer', precio: 1590, stock: 20, descripcion: 'Jean holgado y relajado, estilo urbano.', talles: ['M', 'L', 'XL'], imagen: '/imagenes/jean-mujer-suelto.jpeg' },
-    { id: 9, nombre: 'Pantalón Chino Hombre', categoria: 'Pantalones', genero: 'Hombre', precio: 1390, stock: 30, descripcion: 'Pantalón de gabardina de corte clásico.', talles: ['S', 'M', 'L', 'XL'], imagen: '/imagenes/pantalon-hombre.jpg' },
-    { id: 10, nombre: 'Pantalón Vestir Mujer', categoria: 'Pantalones', genero: 'Mujer', precio: 1690, stock: 18, descripcion: 'Pantalón elegante de vestir para mujer.', talles: ['S', 'M', 'L'], imagen: '/imagenes/pantalon-mujer.jpeg' },
-    { id: 11, nombre: 'Vestido Estampado', categoria: 'Vestidos y Enteritos', genero: 'Mujer', precio: 1990, stock: 14, descripcion: 'Vestido largo y fresco con estampado.', talles: ['S', 'M'], imagen: '/imagenes/vestido.jpeg' },
-    { id: 12, nombre: 'Reloj Deportivo Negro', categoria: 'Accesorios', genero: 'Hombre', precio: 2190, stock: 8, descripcion: 'Reloj resistente con correa de silicona.', talles: ['Único'], imagen: '/imagenes/reloj-negro.jpeg' },
-    { id: 13, nombre: 'Reloj Clásico Azul', categoria: 'Accesorios', genero: 'Hombre', precio: 1990, stock: 5, descripcion: 'Reloj analógico con detalles en azul.', talles: ['Único'], imagen: '/imagenes/reloj-azul.jpeg' },
-    { id: 14, nombre: 'Musculosa Básica', categoria: 'Remeras y Camisas', genero: 'Mujer', precio: 490, stock: 50, descripcion: 'Musculosa de hilo ligera para el verano.', talles: ['S', 'M', 'L'], imagen: '/imagenes/musculosa.jpeg' },
-    { id: 15, nombre: 'Soutien Encaje', categoria: 'Ropa Interior', genero: 'Mujer', precio: 890, stock: 40, descripcion: 'Soutien cómodo de encaje delicado.', talles: ['S', 'M', 'L'], imagen: '/imagenes/sutien.jpeg' }
-  ])
+  // Arrancamos con el array vacío, se va a llenar con los datos de Laravel
+  const productos = ref([])
+  const cargando = ref(false) // Agregamos esto para saber si está cargando de la base de datos
 
   const carrito = ref([])
   const pedidos = ref([])
@@ -30,7 +16,44 @@ export const useTiendaStore = defineStore('tienda', () => {
     descripcionTienda: 'Tienda online de ropa y accesorios.'
   })
 
-  // 2. ACCIONES
+  // 2. ACCIONES (CONEXIÓN CON EL BACKEND)
+  const cargarProductos = async () => {
+    cargando.value = true
+    try {
+      const respuesta = await fetch('http://localhost:8000/api/products')
+      const datos = await respuesta.json()
+      
+      // Adaptamos los nombres de inglés (Laravel) a español (tu Vue)
+      productos.value = datos.map(prod => {
+        
+        // --- EL TRUCO PARA LAS IMÁGENES NUEVAS ---
+        let rutaFoto = prod.image_path;
+        // Si la foto es nueva y está guardada en Laravel, le ponemos la dirección completa
+        if (rutaFoto && rutaFoto.startsWith('/storage/')) {
+          rutaFoto = 'http://localhost:8000' + rutaFoto;
+        }
+        // ------------------------------------------
+
+        return {
+          id: prod.id,
+          nombre: prod.name,
+          categoria: prod.category,
+          genero: prod.gender,
+          precio: prod.price,
+          stock: prod.stock,
+          descripcion: prod.description,
+          talles: prod.sizes,
+          imagen: rutaFoto // Usamos la variable que arreglamos arriba
+        }
+      })
+    } catch (error) {
+      console.error("Hubo un error al conectar con el backend:", error)
+    } finally {
+      cargando.value = false
+    }
+  }
+
+  // 3. ACCIONES DEL CARRITO Y PEDIDOS
   const agregarAlCarrito = (producto, talle, cantidad) => {
     const existe = carrito.value.find(item => item.id === producto.id && item.talle === talle)
     if (existe) {
@@ -86,22 +109,25 @@ export const useTiendaStore = defineStore('tienda', () => {
     }
   }
 
-  // 3. GETTERS
+  // 4. GETTERS
   const totalArticulos = computed(() => {
     return carrito.value.reduce((suma, item) => suma + item.cantidad, 0)
   })
-const categorias = computed(() => {
-  const unicas = Array.from(new Set(productos.value.map(p => p.categoria)))
-  return ['Todos', ...unicas]
-})
+
+  const categorias = computed(() => {
+    const unicas = Array.from(new Set(productos.value.map(p => p.categoria)))
+    return ['Todos', ...unicas]
+  })
 
   return {
     productos,
+    cargando,
     categorias,
     carrito,
     pedidos,
     configuracion,
     totalArticulos,
+    cargarProductos,
     agregarAlCarrito,
     eliminarDelCarrito,
     agregarProducto,

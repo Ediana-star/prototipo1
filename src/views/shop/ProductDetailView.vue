@@ -21,7 +21,13 @@ const cantidadSeleccionada = ref(1)
 const zoomAbierto = ref(false)
 
 const aumentarCantidad = () => {
-  cantidadSeleccionada.value++
+  // Verificamos que haya producto y que la cantidad no supere el stock disponible
+  if (producto.value && cantidadSeleccionada.value < producto.value.stock) {
+    cantidadSeleccionada.value++
+  } else {
+    // Si ya llegamos al límite, mostramos el cartelito
+    mostrarAviso('¡Ya alcanzaste el máximo de prendas disponibles!', 'error')
+  }
 }
 
 const disminuirCantidad = () => {
@@ -100,7 +106,8 @@ const agregarAlCarritoReal = () => {
             <div class="selector-cantidad">
               <button class="btn-cant" @click="disminuirCantidad" :disabled="cantidadSeleccionada === 1">−</button>
               <span class="numero-cant">{{ cantidadSeleccionada }}</span>
-              <button class="btn-cant" @click="aumentarCantidad">+</button>
+              <!-- Aquí está el botón modificado para que se desactive al llegar al límite de stock -->
+              <button class="btn-cant" @click="aumentarCantidad" :disabled="cantidadSeleccionada >= producto.stock">+</button>
             </div>
           </div>
         </div>
