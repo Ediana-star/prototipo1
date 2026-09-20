@@ -3,34 +3,47 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-
-// Estas variables van a guardar lo que el usuario escriba
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 
-// Esta función se ejecuta al hacer clic en el botón
-const guardarAdmin = () => {
-  // 1. Validamos que las contraseñas sean iguales
+const guardarAdmin = async () => {
   if (password.value !== confirmPassword.value) {
     alert('Las contraseñas no coinciden. Revisalas.')
-    return // Corta la función acá para que no siga
+    return 
   }
 
-  // 2. Validamos que no dejen campos vacíos
   if (email.value === '' || password.value === '') {
     alert('Por favor, completá todos los campos.')
     return
   }
 
-  // 3. Guardamos los datos en la memoria del navegador (localStorage)
-  localStorage.setItem('adminEmail', email.value)
-  localStorage.setItem('adminPassword', password.value)
+  try {
+    // Le mandamos los datos al backend real
+    const respuesta = await fetch('http://localhost:8000/api/setup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value
+      })
+    })
 
-  alert('¡Administrador creado con éxito!')
-  
-  // 4. Lo mandamos al Login
-  router.push('/admin/login')
+    const datos = await respuesta.json()
+
+    if (respuesta.ok) {
+      alert('¡Administrador creado con éxito en la base de datos!')
+      router.push('/admin/login')
+    } else {
+      // Si el backend lo rechaza (ej. si ya hay un admin creado)
+      alert(datos.message || 'Hubo un error al crear el administrador.')
+    }
+  } catch (error) {
+    alert('No se pudo conectar con el servidor de Laravel.')
+  }
 }
 </script>
 

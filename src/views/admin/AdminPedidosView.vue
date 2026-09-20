@@ -1,19 +1,133 @@
 <script setup>
-import { useTiendaStore } from '../../stores/useTiendaStore'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
-const store = useTiendaStore()
+const router = useRouter()
+const pedidos = ref([])
+const cargando = ref(true)
 
-const confirmarVenta = (pedido) => {
-  const confirmar = confirm(`¿Confirmar entrega del pedido #${pedido.id}? Se descontará el stock de las prendas.`)
-  if (confirmar) {
-    store.completarPedido(pedido.id)
+// Función auxiliar para buscar nuestra llave en la memoria
+const obtenerToken = () => localStorage.getItem('adminToken')
+
+const cargarPedidos = async () => {
+  cargando.value = true
+  const token = obtenerToken()
+
+  // Si no hay token, lo mandamos directo al login por seguridad
+  if (!token) {
+    router.push('/admin/login')
+    return
+  }
+
+  try {
+    const respuesta = await fetch('http://localhost:8000/api/orders', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        // ¡ACÁ ESTÁ LA MAGIA! Le mostramos el Pase VIP a Laravel
+        'Authorization': `Bearer ${token}` 
+      }
+    })
+
+    // Si Laravel nos rebota (ej: el token caducó), cerramos sesión
+    if (respuesta.status === 401) {
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('sesionIniciada')
+      router.push('/admin/login')
+      return
+    }
+
+    const datos = await respuesta.json()
+
+    pedidos.value = datos.map(dbOrder => {
+      const estadoSeguro = dbOrder.status ? dbOrder.status.charAt(0).toUpperCase() + dbOrder.status.slice(1) : 'Pendiente'
+      const itemsSeguros = dbOrder.items ? dbOrder.items : []
+
+      return {
+        id: dbOrder.id,
+        fecha: dbOrder.created_at ? new Date(dbOrder.created_at).toLocaleDateString('es-UY', { hour: '2-digit', minute: '2-digit' }) : 'Fecha desconocida',
+        estado: estadoSeguro,
+        total: dbOrder.total || 0,
+        cliente: {
+          nombre: dbOrder.customer_name || 'Sin nombre',
+          telefono: dbOrder.customer_phone || 'Sin teléfono',
+          direccion: dbOrder.customer_address || 'Sin dirección'
+        },
+        items: itemsSeguros.map(item => ({
+          nombre: item.product ? item.product.name : 'Prenda eliminada del catálogo',
+          talle: item.size || 'Único',
+          cantidad: item.quantity || 1,
+          precio: item.price || 0
+        }))
+      }
+    })
+  } catch (error) {
+    console.error("Error al cargar pedidos desde el servidor:", error)
+  } finally {
+    cargando.value = false
   }
 }
 
-const rechazarVenta = (pedido) => {
+onMounted(() => {
+  cargarPedidos()
+})
+
+const cambiarEstadoPedido = async (id, nuevoEstado) => {
+  try {
+    const respuesta = await fetch(`http://localhost:8000/api/orders/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${obtenerToken()}` // También mandamos la llave acá
+      },
+      body: JSON.stringify({ status: nuevoEstado })
+    })
+
+    if (respuesta.ok) {
+      cargarPedidos() 
+    } else {
+      alert('Hubo un error al actualizar el pedido en el servidor.')
+    }
+  } catch (error) {
+    alert('No se pudo conectar con el servidor de Laravel.')
+  }
+}
+
+const confirmarVenta = async (pedido) => {
+  const confirmar = confirm(`¿Confirmar entrega del pedido #${pedido.id}? Se descontará el stock de las prendas en la base de datos.`)
+  if (confirmar) {
+    await cambiarEstadoPedido(pedido.id, 'Entregado')
+  }
+}
+
+const rechazarVenta = async (pedido) => {
   const confirmar = confirm(`¿Cancelar el pedido #${pedido.id}? El stock no se verá afectado.`)
   if (confirmar) {
-    store.cancelarPedido(pedido.id)
+    await cambiarEstadoPedido(pedido.id, 'Cancelado')
+  }
+}
+
+const eliminarPedido = async (id) => {
+  const confirmar = confirm(`¿Estás segura de que querés ELIMINAR DEFINITIVAMENTE el pedido #${id}? Esta acción borrará el registro para siempre.`)
+  if (confirmar) {
+    try {
+      const respuesta = await fetch(`http://localhost:8000/api/orders/${id}`, {
+        method: 'DELETE',
+        headers: { 
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${obtenerToken()}` // Y la mandamos para borrar
+        }
+      })
+
+      if (respuesta.ok) {
+        cargarPedidos() 
+      } else {
+        alert('Hubo un error al intentar borrar el pedido.')
+      }
+    } catch (error) {
+      alert('No se pudo conectar con el servidor.')
+    }
   }
 }
 </script>
@@ -27,13 +141,17 @@ const rechazarVenta = (pedido) => {
       </div>
     </div>
 
-    <div v-if="store.pedidos.length === 0" class="sin-pedidos">
+    <div v-if="cargando" class="sin-pedidos">
+      <p>Cargando lista de pedidos desde la base de datos...</p>
+    </div>
+
+    <div v-else-if="pedidos.length === 0" class="sin-pedidos">
       <p>Aún no hay pedidos registrados.</p>
     </div>
 
     <div v-else class="lista-pedidos">
       <div 
-        v-for="pedido in store.pedidos" 
+        v-for="pedido in pedidos" 
         :key="pedido.id" 
         :class="['tarjeta-pedido', pedido.estado.toLowerCase()]"
       >
@@ -66,14 +184,21 @@ const rechazarVenta = (pedido) => {
           </div>
         </div>
 
-        <!-- Botones de Acción (solo visibles si está Pendiente) -->
-        <div v-if="pedido.estado === 'Pendiente'" class="acciones-pedido">
-          <button @click="confirmarVenta(pedido)" class="btn-aprobar">
-            ✓ Confirmar Entrega
-          </button>
-          <button @click="rechazarVenta(pedido)" class="btn-cancelar">
-            ✕ Cancelar Pedido
-          </button>
+        <div class="acciones-pedido">
+          <template v-if="pedido.estado === 'Pendiente'">
+            <button @click="confirmarVenta(pedido)" class="btn-aprobar">
+              ✓ Confirmar Entrega
+            </button>
+            <button @click="rechazarVenta(pedido)" class="btn-cancelar">
+              ✕ Cancelar Pedido
+            </button>
+          </template>
+
+          <template v-else>
+            <button @click="eliminarPedido(pedido.id)" class="btn-eliminar-definitivo">
+              🗑️ Borrar Registro
+            </button>
+          </template>
         </div>
       </div>
     </div>
@@ -109,27 +234,13 @@ const rechazarVenta = (pedido) => {
 .btn-cancelar { background-color: #FFF0F0; color: #C0392B; border: 1px solid #C0392B; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: all 0.2s;}
 .btn-aprobar:hover { background-color: #1B5E20; }
 .btn-cancelar:hover { background-color: #C0392B; color: white; }
+.btn-eliminar-definitivo { background-color: #FFFFFF; color: #888; border: 1px solid #DDD; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: all 0.2s; }
+.btn-eliminar-definitivo:hover { background-color: #FFF0F0; color: #C0392B; border-color: #C0392B; }
 
-/* =========================================
-   📱 RESPONSIVE (Tablets y Celulares)
-   ========================================= */
 @media (max-width: 768px) {
-  .header-pedido {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.8rem;
-  }
-  .cuerpo-pedido {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  .acciones-pedido {
-    flex-direction: column;
-  }
-  .btn-aprobar, .btn-cancelar {
-    width: 100%;
-    text-align: center;
-    padding: 0.8rem;
-  }
+  .header-pedido { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+  .cuerpo-pedido { flex-direction: column; gap: 1.5rem; }
+  .acciones-pedido { flex-direction: column; }
+  .btn-aprobar, .btn-cancelar, .btn-eliminar-definitivo { width: 100%; text-align: center; padding: 0.8rem; }
 }
 </style>

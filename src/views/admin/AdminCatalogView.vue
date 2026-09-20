@@ -1,9 +1,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useTiendaStore } from '../../stores/useTiendaStore'
 
 const store = useTiendaStore()
+const router = useRouter()
 
 onMounted(() => {
   store.cargarProductos()
@@ -13,7 +14,7 @@ const productoEditando = ref(null)
 const busqueda = ref('')
 
 const productosFiltrados = computed(() => {
-  return store.productos.filter(producto => 
+  return store.productos.filter(producto =>
     producto.nombre.toLowerCase().includes(busqueda.value.toLowerCase())
   )
 })
@@ -33,19 +34,24 @@ const abrirEdicion = (producto) => {
   productoEditando.value = { ...producto }
 }
 
-// -------------------------------------------------------------
-// NUEVA VERSIÓN: GUARDAR CAMBIOS REALES EN LA BASE DE DATOS
-// -------------------------------------------------------------
+const obtenerToken = () => localStorage.getItem('adminToken')
+
 const guardarCambios = async () => {
   try {
     mostrarAviso('Guardando...', 'exito')
     
-    // Le mandamos a Laravel (PUT) los datos modificados
+    const token = obtenerToken()
+    if (!token) {
+        router.push('/admin/login')
+        return
+    }
+
     const respuesta = await fetch(`http://localhost:8000/api/products/${productoEditando.value.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}` // ¡Token enviado!
       },
       body: JSON.stringify({
         name: productoEditando.value.nombre,
@@ -54,9 +60,15 @@ const guardarCambios = async () => {
       })
     })
 
+    if (respuesta.status === 401) {
+        localStorage.removeItem('adminToken')
+        router.push('/admin/login')
+        return
+    }
+
     if (respuesta.ok) {
-      await store.cargarProductos() // Recargamos para ver los cambios
-      productoEditando.value = null 
+      await store.cargarProductos() 
+      productoEditando.value = null
       mostrarAviso('¡Los cambios se guardaron correctamente!', 'exito')
     } else {
       mostrarAviso('Hubo un error al intentar editar.', 'error')
@@ -66,24 +78,32 @@ const guardarCambios = async () => {
   }
 }
 
-// -------------------------------------------------------------
-// NUEVA VERSIÓN: BORRAR DE VERDAD EN LA BASE DE DATOS
-// -------------------------------------------------------------
 const eliminarProducto = async (id, nombre) => {
   const confirmar = confirm(`¿Estás seguro de que querés eliminar "${nombre}"? Esta acción no se puede deshacer.`)
-  
   if (confirmar) {
     try {
-      // Le avisamos a Laravel (DELETE) que borre este ID
+      const token = obtenerToken()
+      if (!token) {
+          router.push('/admin/login')
+          return
+      }
+
       const respuesta = await fetch(`http://localhost:8000/api/products/${id}`, {
         method: 'DELETE',
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}` // ¡Token enviado!
         }
       })
 
+      if (respuesta.status === 401) {
+          localStorage.removeItem('adminToken')
+          router.push('/admin/login')
+          return
+      }
+
       if (respuesta.ok) {
-        await store.cargarProductos() // Recargamos para que desaparezca de la tabla
+        await store.cargarProductos() 
         mostrarAviso(`El producto "${nombre}" fue eliminado.`, 'exito')
       } else {
         mostrarAviso('Hubo un error al intentar borrar.', 'error')
@@ -97,22 +117,21 @@ const eliminarProducto = async (id, nombre) => {
 
 <template>
   <div class="admin-view-container">
-    
     <div class="header-pantalla-admin">
       <div>
         <h1>Control de Inventario</h1>
         <p class="subtitulo">Gestioná los productos visibles en la tienda.</p>
       </div>
       <RouterLink to="/admin/agregar-producto" class="btn-agregar-nuevo">
-        ➕ Agregar Nuevo Producto
+        + Agregar Nuevo Producto
       </RouterLink>
     </div>
 
     <div style="margin-bottom: 1rem;">
-      <input 
-        type="text" 
-        v-model="busqueda" 
-        placeholder="Buscar por nombre..." 
+      <input
+        type="text"
+        v-model="busqueda"
+        placeholder="Buscar por nombre..."
         class="input-simple"
       />
     </div>
@@ -139,7 +158,6 @@ const eliminarProducto = async (id, nombre) => {
             <td class="col-id" data-label="ID">
               <span>#{{ producto.id }}</span>
             </td>
-            
             <td class="col-prenda" data-label="Prenda">
               <div class="info-prenda-tabla">
                 <div class="contenedor-foto-tabla">
@@ -151,20 +169,16 @@ const eliminarProducto = async (id, nombre) => {
                 </div>
               </div>
             </td>
-            
             <td data-label="Categoría"><span class="tag-categoria-admin">{{ producto.categoria }}</span></td>
             <td class="precio-admin" data-label="Precio">${{ producto.precio }}</td>
-            
             <td class="stock-unidades" data-label="Stock">
               <span><strong>{{ producto.stock ?? 0 }}</strong> u.</span>
             </td>
-
             <td data-label="Talles">
               <div class="lista-talles-admin">
                 <span v-for="talle in producto.talles" :key="talle" class="badge-talle">{{ talle }}</span>
               </div>
             </td>
-            
             <td class="texto-derecha" data-label="Acciones">
               <div class="acciones-grupo">
                 <button class="btn-accion editar" @click="abrirEdicion(producto)">✏️ Editar</button>
@@ -183,13 +197,13 @@ const eliminarProducto = async (id, nombre) => {
         
         <label>Nombre:</label>
         <input v-model="productoEditando.nombre" type="text" class="input-modal" />
-
+        
         <label>Precio ($):</label>
         <input v-model.number="productoEditando.precio" type="number" class="input-modal" />
-
+        
         <label>Stock disponible:</label>
         <input v-model.number="productoEditando.stock" type="number" class="input-modal" />
-
+        
         <div class="botones-modal">
           <button @click="guardarCambios" class="btn-guardar">Guardar</button>
           <button @click="productoEditando = null" class="btn-cancelar">Cancelar</button>
@@ -203,14 +217,12 @@ const eliminarProducto = async (id, nombre) => {
       <span v-else class="icono-toast">!</span>
       <p>{{ mensajeNotificacion }}</p>
     </div>
-
   </div>
 </template>
 
 <style scoped>
 .input-simple { width: 100%; max-width: 300px; padding: 0.6rem 1rem; border: 1px solid #D2B9A1; border-radius: 6px; font-size: 0.95rem; outline: none; }
 .input-simple:focus { border-color: #8C7355; }
-
 .contenedor-foto-tabla { width: 45px; height: 45px; border-radius: 6px; overflow: hidden; border: 1px solid #EAE5DF; background-color: #FAF9F6; flex-shrink: 0; }
 .foto-miniatura-tabla { width: 100%; height: 100%; object-fit: cover; }
 .header-pantalla-admin { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
@@ -218,7 +230,6 @@ const eliminarProducto = async (id, nombre) => {
 .subtitulo { color: #777777; font-size: 0.95rem; margin: 0; }
 .btn-agregar-nuevo { background-color: #8C7355; color: #FFFFFF; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 4px; font-weight: bold; font-size: 0.9rem; transition: background-color 0.2s; white-space: nowrap;}
 .btn-agregar-nuevo:hover { background-color: #735D43; }
-
 .contenedor-tabla { padding: 0; background-color: #FFFFFF; border-radius: 12px; border: 1px solid #EAE5DF; box-shadow: 0 4px 10px rgba(0,0,0,0.01); overflow: hidden; }
 .tabla-admin { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
 .tabla-admin th { background-color: #F7F5F0; color: #555555; padding: 1rem 1.5rem; font-weight: bold; border-bottom: 2px solid #EAEAEA; }
@@ -227,7 +238,7 @@ const eliminarProducto = async (id, nombre) => {
 .info-prenda-tabla { display: flex; align-items: center; gap: 0.8rem; }
 .nombre-prenda { display: block; font-weight: 600; color: #333333; line-height: 1.2;}
 .descripcion-corta { display: block; font-size: 0.8rem; color: #888888; margin-top: 0.2rem; }
-.tag-categoria-admin { background-color: #EFECE6; color: #555555; font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 4px; }
+.tag-categoria-admin { background-color: #EFECE8; color: #555555; font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 4px; }
 .precio-admin { font-weight: bold; color: #8C7355; }
 .lista-talles-admin { display: flex; gap: 0.3rem; flex-wrap: wrap; justify-content: flex-end; }
 .badge-talle { background-color: #FFFFFF; border: 1px solid #DDDDDD; color: #555555; font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 3px; }
@@ -257,55 +268,23 @@ const eliminarProducto = async (id, nombre) => {
 .toast-notificacion.error { border-left: 5px solid #C0392B; }
 .toast-notificacion.error .icono-toast { background-color: #C0392B; }
 .icono-toast { color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.85rem; flex-shrink: 0; }
+
 @keyframes aparecer { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 @media (max-width: 768px) {
-  .header-pantalla-admin {
-    flex-direction: column;
-    align-items: stretch;
-  }
+  .header-pantalla-admin { flex-direction: column; align-items: stretch; }
   .input-simple { max-width: 100%; }
   .btn-agregar-nuevo { text-align: center; }
-
   .tabla-admin thead { display: none; }
-  .tabla-admin tr {
-    display: flex;
-    flex-direction: column;
-    border-bottom: 2px solid #EAE5DF;
-    padding: 1rem;
-    background-color: #FFF;
-  }
-  .tabla-admin td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid #F9F7F5;
-    text-align: right;
-  }
+  .tabla-admin tr { display: flex; flex-direction: column; border-bottom: 2px solid #EAE5DF; padding: 1rem; background-color: #FFF; }
+  .tabla-admin td { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #F9F7F5; text-align: right; }
   .tabla-admin td:last-child { border-bottom: none; }
-  
-  .tabla-admin td::before {
-    content: attr(data-label);
-    font-weight: bold;
-    color: #888;
-    margin-right: 1rem;
-    text-align: left;
-  }
-  
+  .tabla-admin td::before { content: attr(data-label); font-weight: bold; color: #888; margin-right: 1rem; text-align: left; }
   .col-id span { display: inline-block; }
-  
-  .col-prenda .info-prenda-tabla { text-align: right; justify-content: flex-end; }
+  .col-prenda.info-prenda-tabla { text-align: right; justify-content: flex-end; }
   .col-prenda { flex-direction: column; align-items: flex-end; }
   .col-prenda::before { margin-bottom: 0.5rem; width: 100%; }
-  
   .acciones-grupo { width: 100%; justify-content: flex-end; }
-  
-  .toast-notificacion {
-    left: 1rem;
-    right: 1rem;
-    bottom: 1rem;
-    justify-content: center;
-  }
+  .toast-notificacion { left: 1rem; right: 1rem; bottom: 1rem; justify-content: center; }
 }
 </style>
