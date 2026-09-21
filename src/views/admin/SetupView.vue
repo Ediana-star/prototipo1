@@ -17,7 +17,11 @@ const guardarAdmin = async () => {
     alert('Por favor, completá todos los campos.')
     return
   }
-
+  
+  if (password.value.length < 6) {
+    alert('Por seguridad, la contraseña debe tener al menos 6 caracteres.')
+    return
+  }
   try {
     // Le mandamos los datos al backend real
     const respuesta = await fetch('http://localhost:8000/api/setup', {

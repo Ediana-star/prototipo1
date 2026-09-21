@@ -89,9 +89,12 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const esRutaProtegida = to.path.startsWith('/admin');
   const esPaginaPublica = to.path === '/admin/login' || to.path === '/setup';
+  
+  // Ahora exigimos las DOS cosas: la bandera y la llave real
   const sesionIniciada = localStorage.getItem('sesionIniciada') === 'true';
+  const tieneToken = localStorage.getItem('adminToken') !== null;
 
-  if (esRutaProtegida && !esPaginaPublica && !sesionIniciada) {
+  if (esRutaProtegida && !esPaginaPublica && (!sesionIniciada || !tieneToken)) {
     next('/admin/login');
   } else {
     next();
