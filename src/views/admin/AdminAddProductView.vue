@@ -5,6 +5,9 @@ import { useTiendaStore } from '../../stores/useTiendaStore'
 
 const router = useRouter()
 const store = useTiendaStore()
+// MAGIA APLICADA: Detecta automáticamente el servidor
+const urlServidor = `http://${window.location.hostname}:8000`
+
 
 const nuevoProducto = ref({
   nombre: '',
@@ -79,7 +82,7 @@ const guardarProducto = async () => {
        return
     }
 
-    const respuesta = await fetch('http://localhost:8000/api/products', {
+    const respuesta = await fetch(urlServidor+'/api/products', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',

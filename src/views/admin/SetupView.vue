@@ -2,6 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+
+// MAGIA APLICADA: Detecta automáticamente el servidor
+const urlServidor = `http://${window.location.hostname}:8000`
+
 const router = useRouter()
 const email = ref('')
 const password = ref('')
@@ -30,7 +34,7 @@ const guardarAdmin = async () => {
   }
 
   try {
-    const respuesta = await fetch('http://localhost:8000/api/setup', {
+    const respuesta = await fetch(`${urlServidor}/api/setup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

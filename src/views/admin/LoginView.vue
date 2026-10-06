@@ -4,6 +4,9 @@ import { useRouter, RouterLink } from 'vue-router'
 
 const router = useRouter()
 
+// MAGIA APLICADA: Detecta automáticamente el servidor
+const urlServidor = `http://${window.location.hostname}:8000`
+
 // Variables para el Login Normal
 const usuario = ref('')
 const clave = ref('')
@@ -25,7 +28,8 @@ const iniciarSesion = async () => {
   }
 
   try {
-    const respuesta = await fetch('http://localhost:8000/api/login', {
+    // Reemplazamos localhost por nuestra variable dinámica
+    const respuesta = await fetch(`${urlServidor}/api/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -53,8 +57,6 @@ const iniciarSesion = async () => {
 
 // Nueva función de recuperación
 const ejecutarRecuperacion = async () => {
-  msjRecuperacion.value = ''
-  
   if (!emailRecuperacion.value || !palabraSecreta.value || !nuevaClave.value) {
     msjRecuperacion.value = 'Completá todos los campos por favor.'
     tipoMsj.value = 'error'
@@ -68,7 +70,8 @@ const ejecutarRecuperacion = async () => {
   }
 
   try {
-    const respuesta = await fetch('http://localhost:8000/api/recover', {
+    // Reemplazamos localhost por nuestra variable dinámica
+    const respuesta = await fetch(`${urlServidor}/api/recover`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -89,7 +92,7 @@ const ejecutarRecuperacion = async () => {
       // Esperamos 3 segundos y volvemos al login normal
       setTimeout(() => {
         mostrarRecuperacion.value = false
-        usuario.value = emailRecuperacion.value // Le dejamos el correo escrito por comodidad
+        usuario.value = emailRecuperacion.value 
         msjRecuperacion.value = ''
       }, 3000)
     } else {

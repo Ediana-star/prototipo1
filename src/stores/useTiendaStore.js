@@ -2,15 +2,15 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useTiendaStore = defineStore('tienda', () => {
-  
+  // MAGIA APLICADA: Detecta automáticamente desde dónde te conectas
+  const urlServidor = `http://${window.location.hostname}:8000`
+
   // 1. ESTADO
   // Arrancamos con el array vacío, se va a llenar con los datos de Laravel
   const productos = ref([])
   const cargando = ref(false) // Agregamos esto para saber si está cargando de la base de datos
-
   const carrito = ref([])
   const pedidos = ref([])
-
   const configuracion = ref({
     nombreTienda: 'María Urbana',
     descripcionTienda: 'Tienda online de ropa y accesorios.'
@@ -20,19 +20,25 @@ export const useTiendaStore = defineStore('tienda', () => {
   const cargarProductos = async () => {
     cargando.value = true
     try {
-      const respuesta = await fetch('http://localhost:8000/api/products')
+      // Usamos nuestra nueva variable urlServidor
+      await fetch(`${urlServidor}/sanctum/csrf-cookie`, { credentials: 'include' }) // Esto es para que Laravel Sanctum nos deje hacer la petición
+      // Esto es lo que estaba antes, pero ahora con la variable
+      const respuesta = await fetch(`${urlServidor}/api/products`)
       const datos = await respuesta.json()
-      
+
       // Adaptamos los nombres de inglés (Laravel) a español (tu Vue)
       productos.value = datos.map(prod => {
         
-        // --- EL TRUCO PARA LAS IMÁGENES NUEVAS ---
+        //--- EL TRUCO PARA LAS IMÁGENES NUEVAS Y DE MUESTRA ---
         let rutaFoto = prod.image_path;
-        // Si la foto es nueva y está guardada en Laravel, le ponemos la dirección completa
-        if (rutaFoto && rutaFoto.startsWith('/storage/')) {
-          rutaFoto = 'http://localhost:8000' + rutaFoto;
+        
+        if (rutaFoto) {
+          // Si la ruta viene de la carpeta storage o de imagenes (seeders), le agregamos el servidor
+          if (rutaFoto.startsWith('/storage/') || rutaFoto.startsWith('/imagenes/')) {
+            // Usamos la variable para armar la ruta de la foto también
+            rutaFoto = urlServidor + rutaFoto;
+          }
         }
-        // ------------------------------------------
 
         return {
           id: prod.id,
@@ -56,6 +62,7 @@ export const useTiendaStore = defineStore('tienda', () => {
   // 3. ACCIONES DEL CARRITO Y PEDIDOS
   const agregarAlCarrito = (producto, talle, cantidad) => {
     const existe = carrito.value.find(item => item.id === producto.id && item.talle === talle)
+    
     if (existe) {
       existe.cantidad += cantidad
     } else {
@@ -76,7 +83,7 @@ export const useTiendaStore = defineStore('tienda', () => {
     productos.value.push({ id: siguienteId, ...nuevoProducto })
   }
 
-  // --- GESTIÓN DE PEDIDOS Y STOCK ---
+  //--- GESTIÓN DE PEDIDOS Y STOCK ---
   const crearPedido = (clienteData, itemsCarrito, total) => {
     const nuevoPedido = {
       id: Date.now(),

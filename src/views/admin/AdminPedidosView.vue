@@ -5,6 +5,9 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const pedidos = ref([])
 const cargando = ref(true)
+// MAGIA APLICADA: Detecta automáticamente el servidor
+const urlServidor = `http://${window.location.hostname}:8000`
+
 
 // Función auxiliar para buscar nuestra llave en la memoria
 const obtenerToken = () => localStorage.getItem('adminToken')
@@ -20,7 +23,7 @@ const cargarPedidos = async () => {
   }
 
   try {
-    const respuesta = await fetch('http://localhost:8000/api/orders', {
+    const respuesta = await fetch(urlServidor+'/api/orders', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -74,7 +77,7 @@ onMounted(() => {
 
 const cambiarEstadoPedido = async (id, nuevoEstado) => {
   try {
-    const respuesta = await fetch(`http://localhost:8000/api/orders/${id}`, {
+    const respuesta = await fetch(urlServidor+'/api/orders/'+id, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -112,7 +115,7 @@ const eliminarPedido = async (id) => {
   const confirmar = confirm(`¿Estás segura de que querés ELIMINAR DEFINITIVAMENTE el pedido #${id}? Esta acción borrará el registro para siempre.`)
   if (confirmar) {
     try {
-      const respuesta = await fetch(`http://localhost:8000/api/orders/${id}`, {
+      const respuesta = await fetch(urlServidor+'/api/orders/'+id, {
         method: 'DELETE',
         headers: { 
           'Accept': 'application/json',

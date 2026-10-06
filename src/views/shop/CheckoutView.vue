@@ -7,6 +7,8 @@ import { useTiendaStore } from '../../stores/useTiendaStore'
 
 const store = useTiendaStore()
 const router = useRouter()
+// MAGIA APLICADA: Detecta automáticamente el servidor
+const urlServidor = `http://${window.location.hostname}:8000`
 
 const nombre = ref('')
 const telefono = ref('')
@@ -102,7 +104,7 @@ const confirmarPedido = async () => {
     mostrarAviso('Anotando tu pedido...', 'exito') // Un mensajito visual mientras carga
 
     // B. Mandamos la caja al backend
-    const respuesta = await fetch('http://localhost:8000/api/orders', {
+    const respuesta = await fetch(urlServidor+'/api/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
