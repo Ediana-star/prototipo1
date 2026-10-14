@@ -91,7 +91,7 @@ const eliminarProducto = async (id, nombre) => {
           return
       }
 
-      const respuesta = await fetch(`http://localhost:8000/api/products/${id}`, {
+      const respuesta = await fetch(`${urlServidor}/api/products/${id}`, {
         method: 'DELETE',
         headers: {
           'Accept': 'application/json',
